@@ -4,6 +4,8 @@ import (
 	"dbms/internal/app"
 )
 
+const port = "5000"
+
 func main() {
-	serv.Runserver()
+	serv.Runserver(port)
 }
