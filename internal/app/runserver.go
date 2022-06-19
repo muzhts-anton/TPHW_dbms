@@ -14,7 +14,7 @@ import (
 
 func Runserver(port string) {
 	router := mux.NewRouter()
-	api := router.PathPrefix("/api/v1").Subrouter()
+	api := router.PathPrefix("/api").Subrouter()
 
 	api.Use(middlewares.Logger)
 	api.Use(middlewares.PanicRecovery)

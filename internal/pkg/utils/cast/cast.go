@@ -2,6 +2,7 @@ package cast
 
 import (
 	"dbms/internal/pkg/utils/log"
+	"strconv"
 
 	"encoding/binary"
 	"fmt"
@@ -32,6 +33,11 @@ func TimeToStr(src time.Time, withTime bool) string {
 
 func ToUint64(src []byte) uint64 {
 	return binary.BigEndian.Uint64(src)
+}
+
+func ToInt(src []byte) int {
+	tmp, _ := strconv.Atoi(string(src))
+	return tmp
 }
 
 func ToFloat64(src []byte) float64 {
@@ -76,4 +82,13 @@ func DateToStringUnderscore(src []byte) (string, error) {
 		return "", err
 	}
 	return timeString, err
+}
+
+func ToInt8Arr(src []byte) pgtype.Int8Array {
+	tmp := pgtype.Int8Array{}
+	err := tmp.DecodeBinary(nil, src)
+	if err != nil {
+		return pgtype.Int8Array{}
+	}
+	return tmp
 }

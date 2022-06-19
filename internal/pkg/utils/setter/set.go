@@ -3,9 +3,9 @@ package setter
 import (
 	"dbms/internal/pkg/database"
 
-	_ "dbms/internal/pkg/forum/delivery"
-	_ "dbms/internal/pkg/forum/repository"
-	_ "dbms/internal/pkg/forum/usecase"
+	"dbms/internal/pkg/forum/delivery"
+	"dbms/internal/pkg/forum/repository"
+	"dbms/internal/pkg/forum/usecase"
 
 	"github.com/gorilla/mux"
 )
@@ -20,7 +20,7 @@ type Services struct {
 }
 
 func SetHandlers(svs Services) {
-	// rep := rep.InitRep(svs.Forum.Db)
-	// usc := usc.InitUsc(rep)
-	// del.SetHandlers(svs.Forum.Api, usc)
+	rep := rep.InitRep(svs.Forum.Db)
+	usc := usc.InitUsc(rep)
+	del.SetHandlers(svs.Forum.Api, usc)
 }

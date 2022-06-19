@@ -18,7 +18,59 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson5a72dc82DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Post) {
+func easyjson5a72dc82DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Posts) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(Posts, 0, 0)
+			} else {
+				*out = Posts{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 Post
+			(v1).UnmarshalEasyJSON(in)
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson5a72dc82EncodeDbmsInternalPkgDomain(out *jwriter.Writer, in Posts) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			(v3).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v Posts) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson5a72dc82EncodeDbmsInternalPkgDomain(w, v)
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *Posts) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson5a72dc82DecodeDbmsInternalPkgDomain(l, v)
+}
+func easyjson5a72dc82DecodeDbmsInternalPkgDomain1(in *jlexer.Lexer, out *Post) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -38,7 +90,7 @@ func easyjson5a72dc82DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Post) {
 		}
 		switch key {
 		case "id":
-			out.ID = int(in.Int())
+			out.Id = int(in.Int())
 		case "parent":
 			out.Parent = int(in.Int())
 		case "author":
@@ -67,15 +119,15 @@ func easyjson5a72dc82DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Post) {
 		in.Consumed()
 	}
 }
-func easyjson5a72dc82EncodeDbmsInternalPkgDomain(out *jwriter.Writer, in Post) {
+func easyjson5a72dc82EncodeDbmsInternalPkgDomain1(out *jwriter.Writer, in Post) {
 	out.RawByte('{')
 	first := true
 	_ = first
-	if in.ID != 0 {
+	if in.Id != 0 {
 		const prefix string = ",\"id\":"
 		first = false
 		out.RawString(prefix[1:])
-		out.Int(int(in.ID))
+		out.Int(int(in.Id))
 	}
 	if in.Parent != 0 {
 		const prefix string = ",\"parent\":"
@@ -132,12 +184,12 @@ func easyjson5a72dc82EncodeDbmsInternalPkgDomain(out *jwriter.Writer, in Post) {
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Post) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson5a72dc82EncodeDbmsInternalPkgDomain(w, v)
+	easyjson5a72dc82EncodeDbmsInternalPkgDomain1(w, v)
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Post) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson5a72dc82DecodeDbmsInternalPkgDomain(l, v)
+	easyjson5a72dc82DecodeDbmsInternalPkgDomain1(l, v)
 }
 func easyjson5a72dc82DecodeGithubComJackcPgxPgtype(in *jlexer.Lexer, out *pgtype.Int8Array) {
 	isTopLevel := in.IsStart()
@@ -174,11 +226,11 @@ func easyjson5a72dc82DecodeGithubComJackcPgxPgtype(in *jlexer.Lexer, out *pgtype
 					out.Elements = (out.Elements)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 pgtype.Int8
+					var v4 pgtype.Int8
 					if data := in.Raw(); in.Ok() {
-						in.AddError((v1).UnmarshalJSON(data))
+						in.AddError((v4).UnmarshalJSON(data))
 					}
-					out.Elements = append(out.Elements, v1)
+					out.Elements = append(out.Elements, v4)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -199,9 +251,9 @@ func easyjson5a72dc82DecodeGithubComJackcPgxPgtype(in *jlexer.Lexer, out *pgtype
 					out.Dimensions = (out.Dimensions)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v2 pgtype.ArrayDimension
-					easyjson5a72dc82DecodeGithubComJackcPgxPgtype1(in, &v2)
-					out.Dimensions = append(out.Dimensions, v2)
+					var v5 pgtype.ArrayDimension
+					easyjson5a72dc82DecodeGithubComJackcPgxPgtype1(in, &v5)
+					out.Dimensions = append(out.Dimensions, v5)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -229,11 +281,11 @@ func easyjson5a72dc82EncodeGithubComJackcPgxPgtype(out *jwriter.Writer, in pgtyp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v3, v4 := range in.Elements {
-				if v3 > 0 {
+			for v6, v7 := range in.Elements {
+				if v6 > 0 {
 					out.RawByte(',')
 				}
-				out.Raw((v4).MarshalJSON())
+				out.Raw((v7).MarshalJSON())
 			}
 			out.RawByte(']')
 		}
@@ -245,11 +297,11 @@ func easyjson5a72dc82EncodeGithubComJackcPgxPgtype(out *jwriter.Writer, in pgtyp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v5, v6 := range in.Dimensions {
-				if v5 > 0 {
+			for v8, v9 := range in.Dimensions {
+				if v8 > 0 {
 					out.RawByte(',')
 				}
-				easyjson5a72dc82EncodeGithubComJackcPgxPgtype1(out, v6)
+				easyjson5a72dc82EncodeGithubComJackcPgxPgtype1(out, v9)
 			}
 			out.RawByte(']')
 		}

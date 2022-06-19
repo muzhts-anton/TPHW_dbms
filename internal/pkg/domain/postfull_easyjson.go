@@ -151,7 +151,7 @@ func easyjson136ab299DecodeDbmsInternalPkgDomain3(in *jlexer.Lexer, out *Post) {
 		}
 		switch key {
 		case "id":
-			out.ID = int(in.Int())
+			out.Id = int(in.Int())
 		case "parent":
 			out.Parent = int(in.Int())
 		case "author":
@@ -184,11 +184,11 @@ func easyjson136ab299EncodeDbmsInternalPkgDomain3(out *jwriter.Writer, in Post) 
 	out.RawByte('{')
 	first := true
 	_ = first
-	if in.ID != 0 {
+	if in.Id != 0 {
 		const prefix string = ",\"id\":"
 		first = false
 		out.RawString(prefix[1:])
-		out.Int(int(in.ID))
+		out.Int(int(in.Id))
 	}
 	if in.Parent != 0 {
 		const prefix string = ",\"parent\":"

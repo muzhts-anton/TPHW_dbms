@@ -7,3 +7,6 @@ type User struct {
 	About    string `json:"about,omitempty"`
 	Email    string `json:"email"`
 }
+
+//easyjson:json
+type Users []User

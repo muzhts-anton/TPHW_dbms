@@ -17,7 +17,59 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson2d00218DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Thread) {
+func easyjson2d00218DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Threads) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(Threads, 0, 0)
+			} else {
+				*out = Threads{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 Thread
+			(v1).UnmarshalEasyJSON(in)
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson2d00218EncodeDbmsInternalPkgDomain(out *jwriter.Writer, in Threads) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			(v3).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v Threads) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson2d00218EncodeDbmsInternalPkgDomain(w, v)
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *Threads) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson2d00218DecodeDbmsInternalPkgDomain(l, v)
+}
+func easyjson2d00218DecodeDbmsInternalPkgDomain1(in *jlexer.Lexer, out *Thread) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -64,7 +116,7 @@ func easyjson2d00218DecodeDbmsInternalPkgDomain(in *jlexer.Lexer, out *Thread) {
 		in.Consumed()
 	}
 }
-func easyjson2d00218EncodeDbmsInternalPkgDomain(out *jwriter.Writer, in Thread) {
+func easyjson2d00218EncodeDbmsInternalPkgDomain1(out *jwriter.Writer, in Thread) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -119,10 +171,10 @@ func easyjson2d00218EncodeDbmsInternalPkgDomain(out *jwriter.Writer, in Thread) 
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Thread) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson2d00218EncodeDbmsInternalPkgDomain(w, v)
+	easyjson2d00218EncodeDbmsInternalPkgDomain1(w, v)
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Thread) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson2d00218DecodeDbmsInternalPkgDomain(l, v)
+	easyjson2d00218DecodeDbmsInternalPkgDomain1(l, v)
 }

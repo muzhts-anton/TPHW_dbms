@@ -3,7 +3,6 @@ package del
 import (
 	"dbms/internal/pkg/domain"
 
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -181,294 +180,601 @@ func (h *DelHandler) GetUsersForum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, _ := easyjson.Marshal(usr) // TODO: fix _easyjson
+	out, _ := easyjson.Marshal(domain.Users(usr))
 	w.WriteHeader(http.StatusOK)
 	w.Write(out)
 }
 
 // GetThreadsForum /forum/{slug}/threads
 func (h *DelHandler) GetThreadsForum(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slug, found := vars["slug"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	param, ok := mux.Vars(r)["slug"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
-	limit := ""
-	since := ""
-	desc := ""
 
+	var limit, since, desc string // TODO: pack to struct{...}
 	query := r.URL.Query()
-	if limits := query["limit"]; len(limits) > 0 {
-		limit = limits[0]
-	}
-	if sinces := query["since"]; len(sinces) > 0 {
-		since = sinces[0]
-	}
-	if descs := query["desc"]; len(descs) > 0 {
-		desc = descs[0]
-	}
-	forumS := domain.Forum{Slug: slug}
 
-	users, status := h.dhusc.GetThreadsOfForum(forumS, limit, since, desc)
-	utils.Response(w, status, users)
+	var tmp []string
+	if tmp = query["limit"]; len(tmp) > 0 {
+		limit = tmp[0]
+	}
+	if tmp := query["since"]; len(tmp) > 0 {
+		since = tmp[0]
+	}
+	if tmp := query["desc"]; len(tmp) > 0 {
+		desc = tmp[0]
+	}
+
+	trd, nerr := h.dhusc.GetThreadsOfForum(domain.Forum{Slug: param}, limit, since, desc)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(domain.Threads(trd))
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // GetPostInfo /post/{id}/details
 func (h *DelHandler) GetPostInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	idV, found := vars["id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	id, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 0) // TODO: mb here error of map will be incorrect
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
 
-	id, _ := strconv.Atoi(idV)
-	query := r.URL.Query()
-
 	var related []string
-	if relateds := query["related"]; len(relateds) > 0 {
-		related = strings.Split(relateds[0], ",")
+	if tmp := r.URL.Query()["related"]; len(tmp) > 0 {
+		related = strings.Split(tmp[0], ",")
 	}
 
-	postFull := domain.PostFull{}
+	var pf domain.PostFull
+	pf.Post.Id = int(id)
 
-	postFull.Post.ID = id
-	finalPostF, status := h.dhusc.GetFullPostInfo(postFull, related)
-	utils.Response(w, status, finalPostF)
+	pf, nerr := h.dhusc.GetFullPostInfo(pf, related)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(pf)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // UpdatePostInfo /post/{id}/details
 func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	ids, found := vars["id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
-		return
-	}
-
-	postUpdate := domain.PostUpdate{}
-	err := easyjson.UnmarshalFromReader(r.Body, &postUpdate)
+	id, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 0) // TODO: mb here error of map will be incorrect
 	if err != nil {
-		utils.Response(w, domain.InternalError, nil)
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
-	id, err := strconv.Atoi(ids)
 
-	if err == nil {
-		postUpdate.ID = id
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
+		return
 	}
 
-	finalPostU, status := h.dhusc.UpdatePostInfo(postUpdate)
-	utils.Response(w, status, finalPostU)
+	pu := new(domain.PostUpdate)
+	err = easyjson.Unmarshal(b, pu)
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
+		return
+	}
+
+	pu.Id = int(id)
+
+	pst, nerr := h.dhusc.UpdatePostInfo(*pu)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(pst)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // GetClear /service/clear
 func (h *DelHandler) GetClear(w http.ResponseWriter, _ *http.Request) {
-	status := h.dhusc.GetClear()
-	utils.Response(w, status, nil)
+	nerr := h.dhusc.GetClear()
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // GetStatus /service/status
 func (h *DelHandler) GetStatus(w http.ResponseWriter, _ *http.Request) {
-	statusS := h.dhusc.GetStatus()
-	utils.Response(w, domain.Okey, statusS)
+	sts := h.dhusc.GetStatus()
+
+	out, _ := easyjson.Marshal(sts)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // CreatePosts /thread/{slug_or_id}/create
 func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slugOrId, found := vars["slug_or_id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	slid, ok := mux.Vars(r)["slug_or_id"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
 
-	var posts []domain.Post
-	thread, status := h.dhusc.CheckThreadIdOrSlug(slugOrId)
-	if status != domain.Okey {
-		utils.Response(w, status, nil)
+	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&posts)
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
-		utils.Response(w, domain.InternalError, nil)
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
 
-	if len(posts) == 0 {
-		utils.Response(w, domain.Created, []domain.Post{})
+	var pst domain.Posts
+	err = easyjson.Unmarshal(b, &pst)
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
 
-	createPosts, status := h.dhusc.CreatePosts(posts, thread)
-	utils.Response(w, status, createPosts)
+	if len(pst) == 0 {
+		w.WriteHeader(http.StatusCreated)
+		return
+	}
+
+	pst, nerr = h.dhusc.CreatePosts(pst, trd)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(pst)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // GetThreadInfo /thread/{slug_or_id}/details
 func (h *DelHandler) GetThreadInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slugOrId, found := vars["slug_or_id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	slid, ok := mux.Vars(r)["slug_or_id"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
-	finalThread, status := h.dhusc.CheckThreadIdOrSlug(slugOrId)
-	utils.Response(w, status, finalThread)
+
+	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(trd)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // UpdateThreadInfo /thread/{slug_or_id}/details
 func (h *DelHandler) UpdateThreadInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slugOrId, found := vars["slug_or_id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	slid, ok := mux.Vars(r)["slug_or_id"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
-	threadS := domain.Thread{}
-	err := easyjson.UnmarshalFromReader(r.Body, &threadS)
+
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
-		utils.Response(w, domain.InternalError, nil)
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
-	finalThread, status := h.dhusc.UpdateThreadInfo(slugOrId, threadS)
-	utils.Response(w, status, finalThread)
+
+	trd := new(domain.Thread)
+	err = easyjson.Unmarshal(b, trd)
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
+		return
+	}
+
+	var nerr domain.NetError
+	*trd, nerr = h.dhusc.UpdateThreadInfo(slid, *trd)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(trd)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // GetPostOfThread /thread/{slug_or_id}/posts
 func (h *DelHandler) GetPostOfThread(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slugOrId, found := vars["slug_or_id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	slid, ok := mux.Vars(r)["slug_or_id"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
-	limit := ""
-	since := ""
-	desc := ""
-	sort := ""
 
+	var limit, since, desc, sort string
 	query := r.URL.Query()
-	if limits := query["limit"]; len(limits) > 0 {
-		limit = limits[0]
+
+	var tmp []string
+	if tmp = query["limit"]; len(tmp) > 0 {
+		limit = tmp[0]
 	}
-	if sinces := query["since"]; len(sinces) > 0 {
-		since = sinces[0]
+	if tmp = query["since"]; len(tmp) > 0 {
+		since = tmp[0]
 	}
-	if descs := query["desc"]; len(descs) > 0 {
-		desc = descs[0]
+	if tmp = query["desc"]; len(tmp) > 0 {
+		desc = tmp[0]
 	}
-	if sorts := query["sort"]; len(sorts) > 0 {
-		sort = sorts[0]
+	if tmp = query["sort"]; len(tmp) > 0 {
+		sort = tmp[0]
 	}
 
-	thread, status := h.dhusc.CheckThreadIdOrSlug(slugOrId)
-	if status != domain.Okey {
-		utils.Response(w, status, nil) // return not found
+	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
 		return
 	}
 
-	finalPosts, status := h.dhusc.GetPostOfThread(limit, since, desc, sort, thread.ID)
-	utils.Response(w, status, finalPosts)
+	pst, nerr := h.dhusc.GetPostOfThread(limit, since, desc, sort, trd.Id)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(domain.Posts(pst))
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // Voted /thread/{slug_or_id}/vote
 func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slugOrId, found := vars["slug_or_id"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	slid, ok := mux.Vars(r)["slug_or_id"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
 
-	thread, status := h.dhusc.CheckThreadIdOrSlug(slugOrId)
-	if status != domain.Okey {
-		utils.Response(w, status, nil) // return not found
-		return
-	}
-
-	voteS := domain.Vote{}
-	err := easyjson.UnmarshalFromReader(r.Body, &voteS)
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
-		utils.Response(w, domain.InternalError, nil)
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
 
-	if thread.ID != 0 {
-		voteS.Thread = thread.ID
-	}
+	vt := new(domain.Vote)
+	err = easyjson.Unmarshal(b, vt)
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
 
-	_, statusV := h.dhusc.Voted(voteS, thread)
-	if statusV != domain.Okey {
-		utils.Response(w, statusV, nil)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
 
-	finalThread, statusT := h.dhusc.CheckThreadIdOrSlug(slugOrId)
-	utils.Response(w, statusT, finalThread)
+	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	if trd.Id != 0 {
+		vt.Thread = trd.Id
+	}
+
+	_, nerr = h.dhusc.Voted(*vt, trd)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	trd, nerr = h.dhusc.CheckThreadIdOrSlug(slid)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(trd)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // CreateUsers /user/{nickname}/create
 func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nickname, found := vars["nickname"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
-		return
-	}
-
-	userS := domain.User{}
-	err := easyjson.UnmarshalFromReader(r.Body, &userS)
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
-		utils.Response(w, domain.InternalError, nil)
-		return
-	}
-	userS.NickName = nickname
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
 
-	finalUser, status := h.dhusc.CreateUsers(userS)
-	if status == domain.Created {
-		newU := finalUser[0]
-		utils.Response(w, status, newU)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
-	utils.Response(w, status, finalUser)
+
+	usr := new(domain.User)
+	err = easyjson.Unmarshal(b, usr)
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
+		return
+	}
+
+	var ok bool
+	usr.Nickname, ok = mux.Vars(r)["nickname"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
+		return
+	}
+
+	usrs, nerr := h.dhusc.CreateUsers(*usr)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	var out []byte
+	if nerr.Statuscode == http.StatusCreated {
+		out, _ = easyjson.Marshal(usrs[0])
+		w.WriteHeader(nerr.Statuscode)
+	} else {
+		out, _ = easyjson.Marshal(domain.Users(usrs))
+		w.WriteHeader(http.StatusOK)
+	}
+	w.Write(out)
 }
 
 // GetUser /user/{nickname}/profile
 func (h *DelHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nickname, found := vars["nickname"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
+	var ok bool
+	var usr domain.User
+	usr.Nickname, ok = mux.Vars(r)["nickname"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
 		return
 	}
 
-	userS := domain.User{}
-	userS.NickName = nickname
+	usr, nerr := h.dhusc.GetUser(usr)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
 
-	finalUser, status := h.dhusc.GetUser(userS)
-	utils.Response(w, status, finalUser)
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(usr)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
 
 // ChangeInfoUser /user/{nickname}/profile
 func (h *DelHandler) ChangeInfoUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nickname, found := vars["nickname"]
-	if !found {
-		utils.Response(w, domain.NotFound, nil)
-		return
-	}
-
-	userS := domain.User{}
-	err := easyjson.UnmarshalFromReader(r.Body, &userS)
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
-		utils.Response(w, domain.InternalError, nil)
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
 		return
 	}
-	userS.NickName = nickname
 
-	finalUser, status := h.dhusc.ChangeInfoUser(userS)
-	utils.Response(w, status, finalUser)
+	usr := new(domain.User)
+	err = easyjson.Unmarshal(b, usr)
+	if err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorInternalServerError,
+		})
+
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(out)
+		return
+	}
+
+	var ok bool
+	usr.Nickname, ok = mux.Vars(r)["nickname"]
+	if !ok {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: domain.ErrorNotFound,
+		})
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(out)
+		return
+	}
+
+	var nerr domain.NetError
+	*usr, nerr = h.dhusc.ChangeInfoUser(*usr)
+	if nerr.Err != nil {
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
+	out, _ := easyjson.Marshal(usr)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }

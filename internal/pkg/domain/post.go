@@ -7,7 +7,7 @@ import (
 )
 
 type Post struct {
-	ID       int              `json:"id,omitempty"`
+	Id       int              `json:"id,omitempty"`
 	Parent   int              `json:"parent,omitempty"`
 	Author   string           `json:"author"`
 	Message  string           `json:"message"`
@@ -17,3 +17,6 @@ type Post struct {
 	Created  time.Time        `json:"created,omitempty"`
 	Path     pgtype.Int8Array `json:"path,omitempty"`
 }
+
+//easyjson:json
+type Posts []Post
