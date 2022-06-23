@@ -516,6 +516,7 @@ func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
 	var tmp domain.Thread
 	err := resp.Scan(&tmp.Id, &tmp.Title, &tmp.Author, &tmp.Forum, &tmp.Message, &tmp.Votes, &tmp.Slug, &tmp.Created)
 	if err != nil {
+		fmt.Println("On id:", id, "error="+err.Error())
 		return domain.Thread{}, domain.NetError{
 			Err:        errors.New(domain.ErrorNotFound),
 			Statuscode: http.StatusNotFound,
