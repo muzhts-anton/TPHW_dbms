@@ -3,6 +3,7 @@ package usc
 import (
 	"dbms/internal/pkg/domain"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"strconv"
@@ -114,11 +115,13 @@ func (u *UscHandler) GetStatus() domain.Status {
 }
 
 func (u *UscHandler) CheckThreadIdOrSlug(slugOrId string) (domain.Thread, domain.NetError) {
+	fmt.Println("Usc 1")
 	id, err := strconv.ParseInt(slugOrId, 10, 0)
 	if err != nil {
+		fmt.Println("Oh shit")
 		return u.uhrep.GetThreadSlug(slugOrId)
 	}
-
+	fmt.Println("Usc 2")
 	return u.uhrep.GetIdThread(int(id))
 }
 

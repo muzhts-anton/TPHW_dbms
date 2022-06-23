@@ -2,6 +2,7 @@ package del
 
 import (
 	"dbms/internal/pkg/domain"
+	"fmt"
 
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 
 // CreateForum /forum/create
 func (h *DelHandler) CreateForum(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -41,9 +44,14 @@ func (h *DelHandler) CreateForum(w http.ResponseWriter, r *http.Request) {
 	var nerr domain.NetError
 	*frm, nerr = h.dhusc.Forum(*frm)
 	if nerr.Err != nil {
-		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: nerr.Message,
-		})
+		var out []byte
+		if nerr.Statuscode == http.StatusConflict {
+			out, _ = easyjson.Marshal(frm)
+		} else {
+			out, _ = easyjson.Marshal(domain.ErrorResp{
+				Message: nerr.Message,
+			})
+		}
 
 		w.WriteHeader(nerr.Statuscode)
 		w.Write(out)
@@ -51,12 +59,14 @@ func (h *DelHandler) CreateForum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, _ := easyjson.Marshal(*frm)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(nerr.Statuscode)
 	w.Write(out)
 }
 
 // ForumInfo /forum/{slug}/details
 func (h *DelHandler) ForumInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	param, ok := mux.Vars(r)["slug"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -86,6 +96,8 @@ func (h *DelHandler) ForumInfo(w http.ResponseWriter, r *http.Request) {
 
 // CreateThreadsForum /forum/{slug}/create
 func (h *DelHandler) CreateThreadsForum(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -135,12 +147,14 @@ func (h *DelHandler) CreateThreadsForum(w http.ResponseWriter, r *http.Request) 
 	}
 
 	out, _ := easyjson.Marshal(trd)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(nerr.Statuscode)
 	w.Write(out)
 }
 
 // GetUsersForum /forum/{slug}/users
 func (h *DelHandler) GetUsersForum(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	param, ok := mux.Vars(r)["slug"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -187,6 +201,8 @@ func (h *DelHandler) GetUsersForum(w http.ResponseWriter, r *http.Request) {
 
 // GetThreadsForum /forum/{slug}/threads
 func (h *DelHandler) GetThreadsForum(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	param, ok := mux.Vars(r)["slug"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -230,6 +246,8 @@ func (h *DelHandler) GetThreadsForum(w http.ResponseWriter, r *http.Request) {
 
 // GetPostInfo /post/{id}/details
 func (h *DelHandler) GetPostInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	id, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 0) // TODO: mb here error of map will be incorrect
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -267,6 +285,8 @@ func (h *DelHandler) GetPostInfo(w http.ResponseWriter, r *http.Request) {
 
 // UpdatePostInfo /post/{id}/details
 func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	id, err := strconv.ParseUint(mux.Vars(r)["id"], 10, 0) // TODO: mb here error of map will be incorrect
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -322,6 +342,8 @@ func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
 
 // GetClear /service/clear
 func (h *DelHandler) GetClear(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	nerr := h.dhusc.GetClear()
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -338,6 +360,8 @@ func (h *DelHandler) GetClear(w http.ResponseWriter, _ *http.Request) {
 
 // GetStatus /service/status
 func (h *DelHandler) GetStatus(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	sts := h.dhusc.GetStatus()
 
 	out, _ := easyjson.Marshal(sts)
@@ -347,6 +371,8 @@ func (h *DelHandler) GetStatus(w http.ResponseWriter, _ *http.Request) {
 
 // CreatePosts /thread/{slug_or_id}/create
 func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	slid, ok := mux.Vars(r)["slug_or_id"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -394,7 +420,9 @@ func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(pst) == 0 {
+		out, _ := easyjson.Marshal(pst)
 		w.WriteHeader(http.StatusCreated)
+		w.Write(out)
 		return
 	}
 
@@ -410,12 +438,14 @@ func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, _ := easyjson.Marshal(pst)
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(nerr.Statuscode)
 	w.Write(out)
 }
 
 // GetThreadInfo /thread/{slug_or_id}/details
 func (h *DelHandler) GetThreadInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	slid, ok := mux.Vars(r)["slug_or_id"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -426,7 +456,7 @@ func (h *DelHandler) GetThreadInfo(w http.ResponseWriter, r *http.Request) {
 		w.Write(out)
 		return
 	}
-
+	fmt.Println("del 1")
 	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -445,6 +475,8 @@ func (h *DelHandler) GetThreadInfo(w http.ResponseWriter, r *http.Request) {
 
 // UpdateThreadInfo /thread/{slug_or_id}/details
 func (h *DelHandler) UpdateThreadInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	slid, ok := mux.Vars(r)["slug_or_id"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -499,6 +531,8 @@ func (h *DelHandler) UpdateThreadInfo(w http.ResponseWriter, r *http.Request) {
 
 // GetPostOfThread /thread/{slug_or_id}/posts
 func (h *DelHandler) GetPostOfThread(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	slid, ok := mux.Vars(r)["slug_or_id"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -556,6 +590,8 @@ func (h *DelHandler) GetPostOfThread(w http.ResponseWriter, r *http.Request) {
 
 // Voted /thread/{slug_or_id}/vote
 func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	slid, ok := mux.Vars(r)["slug_or_id"]
 	if !ok {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -635,6 +671,8 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 
 // CreateUsers /user/{nickname}/create
 func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -673,9 +711,14 @@ func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
 
 	usrs, nerr := h.dhusc.CreateUsers(*usr)
 	if nerr.Err != nil {
-		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: nerr.Message,
-		})
+		var out []byte
+		if nerr.Statuscode == http.StatusConflict {
+			out, _ = easyjson.Marshal(domain.Users(usrs))
+		} else {
+			out, _ = easyjson.Marshal(domain.ErrorResp{
+				Message: nerr.Message,
+			})
+		}
 
 		w.WriteHeader(nerr.Statuscode)
 		w.Write(out)
@@ -685,7 +728,7 @@ func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
 	var out []byte
 	if nerr.Statuscode == http.StatusCreated {
 		out, _ = easyjson.Marshal(usrs[0])
-		w.WriteHeader(nerr.Statuscode)
+		w.WriteHeader(http.StatusCreated)
 	} else {
 		out, _ = easyjson.Marshal(domain.Users(usrs))
 		w.WriteHeader(http.StatusOK)
@@ -695,6 +738,8 @@ func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
 
 // GetUser /user/{nickname}/profile
 func (h *DelHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	var ok bool
 	var usr domain.User
 	usr.Nickname, ok = mux.Vars(r)["nickname"]
@@ -726,6 +771,8 @@ func (h *DelHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 // ChangeInfoUser /user/{nickname}/profile
 func (h *DelHandler) ChangeInfoUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {

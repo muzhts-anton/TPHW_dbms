@@ -2,8 +2,7 @@ package cast
 
 import (
 	"dbms/internal/pkg/utils/log"
-	"strconv"
-
+	
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -36,8 +35,8 @@ func ToUint64(src []byte) uint64 {
 }
 
 func ToInt(src []byte) int {
-	tmp, _ := strconv.Atoi(string(src))
-	return tmp
+	tmp := binary.BigEndian.Uint32(src)
+	return int(tmp)
 }
 
 func ToFloat64(src []byte) float64 {

@@ -5,6 +5,7 @@ import (
 
 	"context"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -12,6 +13,9 @@ import (
 type DBbyterow [][]byte
 
 type ConnectionPool interface {
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Begin(context.Context) (pgx.Tx, error)
 	Close()
 }
@@ -65,6 +69,7 @@ func (dbm *DBManager) Query(queryString string, params ...interface{}) ([]DBbyte
 	defer func() {
 		err := tx.Rollback(transactionContext)
 		if err != nil {
+			log.Warn("{Query} rollback")
 			log.Error(err)
 		}
 	}()
