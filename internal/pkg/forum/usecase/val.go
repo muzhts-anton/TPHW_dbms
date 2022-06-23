@@ -2,10 +2,10 @@ package usc
 
 import (
 	"dbms/internal/pkg/domain"
-	"errors"
-	"fmt"
-	"net/http"
 
+	"errors"
+	_ "fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/jackc/pgconn"
@@ -103,7 +103,11 @@ func (u *UscHandler) UpdatePostInfo(postUpdate domain.PostUpdate) (domain.Post, 
 		}
 	}
 
-	return pst, domain.NetError{Err: nil}
+	return pst, domain.NetError{
+		Err:        nil,
+		Statuscode: http.StatusOK,
+		Message:    "",
+	}
 }
 
 func (u *UscHandler) GetClear() domain.NetError {
@@ -115,13 +119,10 @@ func (u *UscHandler) GetStatus() domain.Status {
 }
 
 func (u *UscHandler) CheckThreadIdOrSlug(slugOrId string) (domain.Thread, domain.NetError) {
-	fmt.Println("Usc 1")
 	id, err := strconv.ParseInt(slugOrId, 10, 0)
 	if err != nil {
-		fmt.Println("Oh shit")
 		return u.uhrep.GetThreadSlug(slugOrId)
 	}
-	fmt.Println("Usc 2")
 	return u.uhrep.GetIdThread(int(id))
 }
 
@@ -186,7 +187,11 @@ func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Threa
 				}
 			}
 
-			return thread, domain.NetError{Err: nil}
+			return thread, domain.NetError{
+				Err:        nil,
+				Statuscode: http.StatusOK,
+				Message:    "",
+			}
 		}
 
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23503" {
@@ -204,7 +209,11 @@ func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Threa
 		}
 	}
 
-	return thread, domain.NetError{Err: nil}
+	return thread, domain.NetError{
+		Err:        nil,
+		Statuscode: http.StatusOK,
+		Message:    "",
+	}
 }
 
 func (u *UscHandler) CreateUsers(user domain.User) ([]domain.User, domain.NetError) {
@@ -253,5 +262,9 @@ func (u *UscHandler) ChangeInfoUser(user domain.User) (domain.User, domain.NetEr
 		}
 	}
 
-	return usr, domain.NetError{Err: nil}
+	return usr, domain.NetError{
+		Err:        nil,
+		Statuscode: http.StatusOK,
+		Message:    "",
+	}
 }

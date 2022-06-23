@@ -603,6 +603,18 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	if nerr.Statuscode != http.StatusOK {
+		fmt.Println("(1)", slid, nerr.Statuscode)
+		out, _ := easyjson.Marshal(domain.ErrorResp{
+			Message: nerr.Message,
+		})
+
+		w.WriteHeader(nerr.Statuscode)
+		w.Write(out)
+		return
+	}
+
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -627,23 +639,13 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
-	if nerr.Err != nil {
-		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: nerr.Message,
-		})
-
-		w.WriteHeader(nerr.Statuscode)
-		w.Write(out)
-		return
-	}
-
 	if trd.Id != 0 {
 		vt.Thread = trd.Id
 	}
 
 	_, nerr = h.dhusc.Voted(*vt, trd)
-	if nerr.Err != nil {
+	if nerr.Statuscode != http.StatusOK {
+		fmt.Println("(2)", slid, nerr.Statuscode)
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
 		})
@@ -655,6 +657,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 
 	trd, nerr = h.dhusc.CheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
+		fmt.Println("(3)", slid, nerr.Statuscode)
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
 		})
@@ -664,6 +667,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("(4)", slid, http.StatusOK)
 	out, _ := easyjson.Marshal(trd)
 	w.WriteHeader(http.StatusOK)
 	w.Write(out)
