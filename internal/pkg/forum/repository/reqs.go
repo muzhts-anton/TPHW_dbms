@@ -952,6 +952,7 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 			Message:    domain.ErrorInternalServerError,
 		}
 	}
+	defer resp.Close() // ?
 
 	pst := make([]domain.Post, 0)
 	for resp.Next() {
@@ -1021,6 +1022,8 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 		}
 	}
 
+	defer resp.Close() // ?
+
 	pst := make([]domain.Post, 0)
 	// for i := range resp {
 	// 	pst = append(pst, domain.Post{
@@ -1053,7 +1056,7 @@ func (r *repHandler) InVoted(vote domain.Vote) error {
 }
 
 func (r *repHandler) UpVote(vote domain.Vote) (domain.Vote, error) {
-	_, err := r.dbm.Pool.Query(context.Background(), UpdateVote, vote.Voice, vote.Nickname, vote.Thread)
+	_, err := r.dbm.Pool.Exec(context.Background(), UpdateVote, vote.Voice, vote.Nickname, vote.Thread)
 	if err != nil {
 		return domain.Vote{}, err
 	}
@@ -1071,6 +1074,8 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 			Message:    domain.ErrorInternalServerError,
 		}
 	}
+
+	defer resp.Close() // ?
 
 	usr := make([]domain.User, 0)
 	// for i := range resp {
