@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
+	_ "strings"
 	"time"
 
 	"github.com/jackc/pgconn"
@@ -300,7 +300,7 @@ func (r *repHandler) GetThreadSlug(slug string) (domain.Thread, domain.NetError)
 }
 
 func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.User, domain.NetError) {
-	var query string // TODO: rewrite
+	var query string
 	if desc == "true" {
 		if since != "" {
 			query = fmt.Sprintf(GetUsersOfForumDescNotNilSince, since)
@@ -309,11 +309,6 @@ func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 		}
 	} else {
 		query = fmt.Sprintf(GetUsersOfForumDescNil, since)
-		if since == "" {
-			query = fmt.Sprintf(GetUsersOfForumDescNil, 0) // FIXME: why %s <- 0?
-		} else {
-			query = fmt.Sprintf(GetUsersOfForumDescNil, since)
-		}
 	}
 
 	usr := make([]domain.User, 0)
@@ -339,9 +334,9 @@ func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 
 	defer resp.Close() // FIXME: little trick btw
 	for resp.Next() {
-		user := domain.User{}
-		resp.Scan(&user.Nickname, &user.Fullname, &user.About, &user.Email)
-		usr = append(usr, user)
+		var tmp domain.User
+		resp.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
+		usr = append(usr, tmp)
 	}
 
 	return usr, domain.NetError{
@@ -354,138 +349,31 @@ func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 func (r *repHandler) GetThreadsOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.Thread, domain.NetError) {
 	trd := make([]domain.Thread, 0)
 
-	if since != "" {
-		if desc == "true" {
-			resp, err := r.dbm.Pool.Query(context.Background(), GetThreadsSinceDescNotNil, forum.Slug, since, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusNotFound,
-					Message:    domain.ErrorNotFound,
-				}
-			}
+	var resp pgx.Rows
+	var err error
+	if since != "" && desc == "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsSinceDescNotNil, forum.Slug, since, limit)
+	} else if since != "" && desc != "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsSinceDescNil, forum.Slug, since, limit)
+	} else if since == "" && desc == "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsDescNotNil, forum.Slug, limit)
+	} else if since == "" && desc != "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsDescNil, forum.Slug, limit)
+	}
 
-			// for i := range resp {
-			// 	trd = append(trd, domain.Thread{
-			// 		Id:      cast.ToInt(resp[i][0]),
-			// 		Title:   cast.ToString(resp[i][1]),
-			// 		Author:  cast.ToString(resp[i][2]),
-			// 		Forum:   cast.ToString(resp[i][3]),
-			// 		Message: cast.ToString(resp[i][4]),
-			// 		Votes:   cast.ToInt(resp[i][5]),
-			// 		Slug:    cast.ToString(resp[i][6]),
-			// 		Created: cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				threadS := domain.Thread{}
-				err := resp.Scan(&threadS.Id, &threadS.Title, &threadS.Author, &threadS.Forum, &threadS.Message, &threadS.Votes, &threadS.Slug, &threadS.Created)
-				if err != nil {
-					continue
-				}
-
-				trd = append(trd, threadS)
-			}
-		} else {
-			resp, err := r.dbm.Pool.Query(context.Background(), GetThreadsSinceDescNil, forum.Slug, since, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusNotFound,
-					Message:    domain.ErrorNotFound,
-				}
-			}
-
-			// for i := range resp {
-			// 	trd = append(trd, domain.Thread{
-			// 		Id:      cast.ToInt(resp[i][0]),
-			// 		Title:   cast.ToString(resp[i][1]),
-			// 		Author:  cast.ToString(resp[i][2]),
-			// 		Forum:   cast.ToString(resp[i][3]),
-			// 		Message: cast.ToString(resp[i][4]),
-			// 		Votes:   cast.ToInt(resp[i][5]),
-			// 		Slug:    cast.ToString(resp[i][6]),
-			// 		Created: cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				threadS := domain.Thread{}
-				err := resp.Scan(&threadS.Id, &threadS.Title, &threadS.Author, &threadS.Forum, &threadS.Message, &threadS.Votes, &threadS.Slug, &threadS.Created)
-				if err != nil {
-					continue
-				}
-
-				trd = append(trd, threadS)
-			}
+	if err != nil {
+		return nil, domain.NetError{
+			Err:        err,
+			Statuscode: http.StatusNotFound,
+			Message:    domain.ErrorNotFound,
 		}
-	} else {
-		if desc == "true" {
-			resp, err := r.dbm.Pool.Query(context.Background(), GetThreadsDescNotNil, forum.Slug, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusNotFound,
-					Message:    domain.ErrorNotFound,
-				}
-			}
+	}
 
-			// for i := range resp {
-			// 	trd = append(trd, domain.Thread{
-			// 		Id:      cast.ToInt(resp[i][0]),
-			// 		Title:   cast.ToString(resp[i][1]),
-			// 		Author:  cast.ToString(resp[i][2]),
-			// 		Forum:   cast.ToString(resp[i][3]),
-			// 		Message: cast.ToString(resp[i][4]),
-			// 		Votes:   cast.ToInt(resp[i][5]),
-			// 		Slug:    cast.ToString(resp[i][6]),
-			// 		Created: cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				threadS := domain.Thread{}
-				err := resp.Scan(&threadS.Id, &threadS.Title, &threadS.Author, &threadS.Forum, &threadS.Message, &threadS.Votes, &threadS.Slug, &threadS.Created)
-				if err != nil {
-					continue
-				}
-
-				trd = append(trd, threadS)
-			}
-		} else {
-			resp, err := r.dbm.Pool.Query(context.Background(), GetThreadsDescNil, forum.Slug, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusNotFound,
-					Message:    domain.ErrorNotFound,
-				}
-			}
-
-			// for i := range resp {
-			// 	trd = append(trd, domain.Thread{
-			// 		Id:      cast.ToInt(resp[i][0]),
-			// 		Title:   cast.ToString(resp[i][1]),
-			// 		Author:  cast.ToString(resp[i][2]),
-			// 		Forum:   cast.ToString(resp[i][3]),
-			// 		Message: cast.ToString(resp[i][4]),
-			// 		Votes:   cast.ToInt(resp[i][5]),
-			// 		Slug:    cast.ToString(resp[i][6]),
-			// 		Created: cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				threadS := domain.Thread{}
-				err := resp.Scan(&threadS.Id, &threadS.Title, &threadS.Author, &threadS.Forum, &threadS.Message, &threadS.Votes, &threadS.Slug, &threadS.Created)
-				if err != nil {
-					continue
-				}
-
-				trd = append(trd, threadS)
-			}
-		}
+	defer resp.Close()
+	for resp.Next() {
+		var tmp domain.Thread
+		resp.Scan(&tmp.Id, &tmp.Title, &tmp.Author, &tmp.Forum, &tmp.Message, &tmp.Votes, &tmp.Slug, &tmp.Created)
+		trd = append(trd, tmp)
 	}
 
 	return trd, domain.NetError{
@@ -516,7 +404,6 @@ func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
 	var tmp domain.Thread
 	err := resp.Scan(&tmp.Id, &tmp.Title, &tmp.Author, &tmp.Forum, &tmp.Message, &tmp.Votes, &tmp.Slug, &tmp.Created)
 	if err != nil {
-		fmt.Println("On id:", id, "error="+err.Error())
 		return domain.Thread{}, domain.NetError{
 			Err:        errors.New(domain.ErrorNotFound),
 			Statuscode: http.StatusNotFound,
@@ -571,19 +458,18 @@ func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (d
 		}
 	}
 
-	for i := 0; i < len(related); i++ {
-		if "user" == related[i] {
+	for _, item := range related {
+		if "thread" == item {
+			tmp, _ := r.GetIdThread(pstf.Post.Thread)
+			pstf.Thread = &tmp
+		}
+		if "user" == item {
 			tmp, _ := r.GetUser(pstf.Post.Author)
 			pstf.Author = &tmp
 		}
-		if "forum" == related[i] {
+		if "forum" == item {
 			tmp, _ := r.GetForum(pstf.Post.Forum)
 			pstf.Forum = &tmp
-		}
-		if "thread" == related[i] {
-			tmp, _ := r.GetIdThread(pstf.Post.Thread)
-			pstf.Thread = &tmp
-
 		}
 	}
 
@@ -659,85 +545,60 @@ func (r *repHandler) GetClear() domain.NetError {
 
 func (r *repHandler) GetStatus() (sts domain.Status) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), SelectCountUsers)
-	err := resp.Scan(&sts.User)
-	if err != nil {
+	if err := resp.Scan(&sts.User); err != nil {
 		sts.User = 0
 	}
 
 	resp = r.dbm.Pool.QueryRow(context.Background(), SelectCountForum)
-	err = resp.Scan(&sts.Forum)
-	if err != nil {
+	if err := resp.Scan(&sts.Forum); err != nil {
 		sts.Forum = 0
 	}
 
 	resp = r.dbm.Pool.QueryRow(context.Background(), SelectCountThreads)
-	err = resp.Scan(&sts.Thread)
-	if err != nil {
+	if err := resp.Scan(&sts.Thread); err != nil {
 		sts.Thread = 0
 	}
 
 	resp = r.dbm.Pool.QueryRow(context.Background(), SelectCountPosts)
-	err = resp.Scan(&sts.Post)
-	if err != nil {
+	if err := resp.Scan(&sts.Post); err != nil {
 		sts.Post = 0
 	}
 
 	return
 }
 
-// TODO: test & rewrite if necessary
 func (r *repHandler) InPosts(posts []domain.Post, thread domain.Thread) ([]domain.Post, error) {
-	query := InsertIntoPosts
-
+	now := time.Now()
+	var qr string
 	var values []interface{}
-	created := time.Now()
-	for i, post := range posts {
-		value := fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
-		query += value
-		values = append(values, post.Author)
-		values = append(values, created)
-		values = append(values, thread.Forum)
-		values = append(values, post.Message)
-		values = append(values, post.Parent)
-		values = append(values, thread.Id)
+	for i, item := range posts {
+		qr += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d),", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
+		values = append(values,
+			item.Author,
+			now,
+			thread.Forum,
+			item.Message,
+			item.Parent,
+			thread.Id,
+		)
 	}
 
-	query = strings.TrimSuffix(query, ",")
-	query += ` RETURNING id, created, forum, isEdited, thread;`
-
-	// resp, err := r.dbm.Query(query, values...)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// if len(resp) == 0 {
-	// 	return nil, errors.New(domain.ErrorInternalServerError)
-	// }
-
-	// for i, pst := range posts {
-	// 	pst.Id = cast.ToInt(resp[i][0])
-	// 	pst.Created = cast.ToTime(resp[i][1])
-	// 	pst.Forum = cast.ToString(resp[i][2])
-	// 	pst.IsEdited = cast.ToBool(resp[i][3])
-	// 	pst.Thread = cast.ToInt(resp[i][4])
-	// }
-
-	rows, err := r.dbm.Pool.Query(context.Background(), query, values...)
+	resp, err := r.dbm.Pool.Query(context.Background(), fmt.Sprintf(InsertIntoPosts, qr[:len(qr)-1]), values...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer resp.Close()
 
 	for i := range posts {
-		if rows.Next() {
-			err := rows.Scan(&posts[i].Id, &posts[i].Created, &posts[i].Forum, &posts[i].IsEdited, &posts[i].Thread)
-			if err != nil {
+		if resp.Next() {
+			if err := resp.Scan(&posts[i].Id, &posts[i].Created, &posts[i].Forum, &posts[i].IsEdited, &posts[i].Thread); err != nil {
 				return nil, err
 			}
 		}
 	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
+
+	if resp.Err() != nil {
+		return nil, resp.Err()
 	}
 
 	return posts, nil
@@ -746,9 +607,9 @@ func (r *repHandler) InPosts(posts []domain.Post, thread domain.Thread) ([]domai
 func (r *repHandler) UpdateThreadInfo(upThread domain.Thread) (domain.Thread, domain.NetError) {
 	var resp pgx.Row
 	if upThread.Slug == "" {
-		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(UpdateThread, `id=$3`), upThread.Title, upThread.Message, upThread.Id)
+		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(UpdateThread, `id`), upThread.Title, upThread.Message, upThread.Id)
 	} else {
-		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(UpdateThread, `slug=$3`), upThread.Title, upThread.Message, upThread.Slug)
+		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(UpdateThread, `slug`), upThread.Title, upThread.Message, upThread.Slug)
 	}
 
 	var tmp domain.Thread
@@ -778,122 +639,31 @@ func (r *repHandler) UpdateThreadInfo(upThread domain.Thread) (domain.Thread, do
 
 func (r *repHandler) GetPostsFlat(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
 	pst := make([]domain.Post, 0)
-	if since == "" {
-		if desc == "true" {
-			resp, err := r.dbm.Pool.Query(context.Background(), SelectPostSinceDescNotNil, id, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusInternalServerError,
-					Message:    domain.ErrorInternalServerError,
-				}
-			}
+	var resp pgx.Rows
+	var err error
+	if since == "" && desc == "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostSinceDescNotNil, id, limit)
+	} else if since == "" && desc != "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostSinceDescNil, id, limit)
+	} else if since != "" && desc == "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostDescNotNil, id, since, limit)
+	} else if since != "" && desc != "true" {
+		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostDescNil, id, since, limit)
+	}
 
-			// for i := range resp {
-			// 	pst = append(pst, domain.Post{
-			// 		Id:       cast.ToInt(resp[i][0]),
-			// 		Parent:   cast.ToInt(resp[i][1]),
-			// 		Author:   cast.ToString(resp[i][2]),
-			// 		Message:  cast.ToString(resp[i][3]),
-			// 		IsEdited: cast.ToBool(resp[i][4]),
-			// 		Forum:    cast.ToString(resp[i][5]),
-			// 		Thread:   cast.ToInt(resp[i][6]),
-			// 		Created:  cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				onePost := domain.Post{}
-				resp.Scan(&onePost.Id, &onePost.Parent, &onePost.Author, &onePost.Message, &onePost.IsEdited, &onePost.Forum, &onePost.Thread, &onePost.Created)
-				pst = append(pst, onePost)
-			}
-		} else {
-			resp, err := r.dbm.Pool.Query(context.Background(), SelectPostSinceDescNil, id, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusInternalServerError,
-					Message:    domain.ErrorInternalServerError,
-				}
-			}
-
-			// for i := range resp {
-			// 	pst = append(pst, domain.Post{
-			// 		Id:       cast.ToInt(resp[i][0]),
-			// 		Parent:   cast.ToInt(resp[i][1]),
-			// 		Author:   cast.ToString(resp[i][2]),
-			// 		Message:  cast.ToString(resp[i][3]),
-			// 		IsEdited: cast.ToBool(resp[i][4]),
-			// 		Forum:    cast.ToString(resp[i][5]),
-			// 		Thread:   cast.ToInt(resp[i][6]),
-			// 		Created:  cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				onePost := domain.Post{}
-				resp.Scan(&onePost.Id, &onePost.Parent, &onePost.Author, &onePost.Message, &onePost.IsEdited, &onePost.Forum, &onePost.Thread, &onePost.Created)
-				pst = append(pst, onePost)
-			}
+	if err != nil {
+		return nil, domain.NetError{
+			Err:        err,
+			Statuscode: http.StatusInternalServerError,
+			Message:    domain.ErrorInternalServerError,
 		}
-	} else {
-		if desc == "true" {
-			resp, err := r.dbm.Pool.Query(context.Background(), SelectPostDescNotNil, id, since, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusInternalServerError,
-					Message:    domain.ErrorInternalServerError,
-				}
-			}
+	}
 
-			// for i := range resp {
-			// 	pst = append(pst, domain.Post{
-			// 		Id:       cast.ToInt(resp[i][0]),
-			// 		Parent:   cast.ToInt(resp[i][1]),
-			// 		Author:   cast.ToString(resp[i][2]),
-			// 		Message:  cast.ToString(resp[i][3]),
-			// 		IsEdited: cast.ToBool(resp[i][4]),
-			// 		Forum:    cast.ToString(resp[i][5]),
-			// 		Thread:   cast.ToInt(resp[i][6]),
-			// 		Created:  cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				onePost := domain.Post{}
-				resp.Scan(&onePost.Id, &onePost.Parent, &onePost.Author, &onePost.Message, &onePost.IsEdited, &onePost.Forum, &onePost.Thread, &onePost.Created)
-				pst = append(pst, onePost)
-			}
-		} else {
-			resp, err := r.dbm.Pool.Query(context.Background(), SelectPostDescNil, id, since, limit)
-			if err != nil {
-				return nil, domain.NetError{
-					Err:        err,
-					Statuscode: http.StatusInternalServerError,
-					Message:    domain.ErrorInternalServerError,
-				}
-			}
-
-			// for i := range resp {
-			// 	pst = append(pst, domain.Post{
-			// 		Id:       cast.ToInt(resp[i][0]),
-			// 		Parent:   cast.ToInt(resp[i][1]),
-			// 		Author:   cast.ToString(resp[i][2]),
-			// 		Message:  cast.ToString(resp[i][3]),
-			// 		IsEdited: cast.ToBool(resp[i][4]),
-			// 		Forum:    cast.ToString(resp[i][5]),
-			// 		Thread:   cast.ToInt(resp[i][6]),
-			// 		Created:  cast.ToTime(resp[i][7]),
-			// 	})
-			// }
-			defer resp.Close()
-			for resp.Next() {
-				onePost := domain.Post{}
-				resp.Scan(&onePost.Id, &onePost.Parent, &onePost.Author, &onePost.Message, &onePost.IsEdited, &onePost.Forum, &onePost.Thread, &onePost.Created)
-				pst = append(pst, onePost)
-			}
-		}
+	defer resp.Close()
+	for resp.Next() {
+		var tmp domain.Post
+		resp.Scan(&tmp.Id, &tmp.Parent, &tmp.Author, &tmp.Message, &tmp.IsEdited, &tmp.Forum, &tmp.Thread, &tmp.Created)
+		pst = append(pst, tmp)
 	}
 
 	return pst, domain.NetError{
@@ -903,44 +673,37 @@ func (r *repHandler) GetPostsFlat(limit string, since string, desc string, id in
 	}
 }
 
-func (r *repHandler) getTree(id int, since, limit, desc string) (resp pgx.Rows, err error) {
-	queryRow := ""
+func (r *repHandler) getTree(id int, since, limit, desc string) (pgx.Rows, error) {
+	var qr string
+	var params []interface{}
 
-	if limit == "" && since == "" {
-		if desc == "true" {
-			queryRow += SelectTreeLimitSinceNil
-		} else {
-			queryRow += SelectTreeLimitSinceDescNil
-		}
-		resp, err = r.dbm.Pool.Query(context.Background(), queryRow, id)
-	} else {
-		if limit != "" && since == "" {
-			if desc == "true" {
-				queryRow += SelectTreeSinceNil
-			} else {
-				queryRow += SelectTreeSinceDescNil
-			}
-			resp, err = r.dbm.Pool.Query(context.Background(), queryRow, id, limit)
-		}
-		if limit != "" && since != "" {
-			if desc == "true" {
-				queryRow = SelectTreeNotNil
-			} else {
-				queryRow = SelectTree
-			}
-			resp, err = r.dbm.Pool.Query(context.Background(), queryRow, id, since, limit)
-		}
-		if limit == "" && since != "" {
-			if desc == "true" {
-				queryRow = SelectTreeSinceNilDesc
-			} else {
-				queryRow = SelectTreeSinceNilDescNil
-			}
-			resp, err = r.dbm.Pool.Query(context.Background(), queryRow, id, since)
-		}
+	if limit == "" && since == "" && desc == "true" {
+		qr = SelectTreeLimitSinceNil
+		params = []interface{}{id}
+	} else if limit == "" && since == "" && desc != "true" {
+		qr = SelectTreeLimitSinceDescNil
+		params = []interface{}{id}
+	} else if limit == "" && since != "" && desc == "true" {
+		qr = SelectTreeSinceNilDesc
+		params = []interface{}{id, since}
+	} else if limit == "" && since != "" && desc != "true" {
+		qr = SelectTreeSinceNilDescNil
+		params = []interface{}{id, since}
+	} else if limit != "" && since == "" && desc == "true" {
+		qr = SelectTreeSinceNil
+		params = []interface{}{id, limit}
+	} else if limit != "" && since == "" && desc != "true" {
+		qr = SelectTreeSinceDescNil
+		params = []interface{}{id, limit}
+	} else if limit != "" && since != "" && desc == "true" {
+		qr = SelectTreeNotNil
+		params = []interface{}{id, since, limit}
+	} else if limit != "" && since != "" && desc != "true" {
+		qr = SelectTree
+		params = []interface{}{id, since, limit}
 	}
 
-	return
+	return r.dbm.Pool.Query(context.Background(), qr, params...)
 }
 
 func (r *repHandler) GetPostsTree(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
@@ -952,12 +715,12 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 			Message:    domain.ErrorInternalServerError,
 		}
 	}
-	defer resp.Close() // ?
+	defer resp.Close()
 
 	pst := make([]domain.Post, 0)
 	for resp.Next() {
-		var onePost domain.Post
-		err = resp.Scan(&onePost.Id, &onePost.Parent, &onePost.Author, &onePost.Message, &onePost.IsEdited, &onePost.Forum, &onePost.Thread, &onePost.Created)
+		var tmp domain.Post
+		err = resp.Scan(&tmp.Id, &tmp.Parent, &tmp.Author, &tmp.Message, &tmp.IsEdited, &tmp.Forum, &tmp.Thread, &tmp.Created)
 		if err != nil {
 			return pst, domain.NetError{
 				Err:        err,
@@ -966,7 +729,7 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 			}
 		}
 
-		pst = append(pst, onePost)
+		pst = append(pst, tmp)
 	}
 	// for i := range resp {
 	// 	pst = append(pst, domain.Post{
@@ -988,7 +751,6 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 	}
 }
 
-// TODO: rewrite queries handling
 func (r *repHandler) GetPostsParent(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
 	par := fmt.Sprintf(`SELECT id FROM posts WHERE thread = %d AND parent = 0 `, id)
 	if since != "" {
@@ -1006,14 +768,15 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 	if limit != "" {
 		par += " LIMIT " + limit
 	}
-	queryRow := fmt.Sprintf(`SELECT id, parent, author, message, isedited, forum, thread, created FROM posts WHERE path[1] = ANY (%s) `, par)
+
+	var qr string
 	if desc == "true" {
-		queryRow += ` ORDER BY path[1] DESC, path,  id `
+		qr = fmt.Sprintf(SelectOnPostsParentDesc, par)
 	} else {
-		queryRow += ` ORDER BY path[1] ASC, path,  id `
+		qr = fmt.Sprintf(SelectOnPostsParentAsc, par)
 	}
 
-	resp, err := r.dbm.Pool.Query(context.Background(), queryRow)
+	resp, err := r.dbm.Pool.Query(context.Background(), qr)
 	if err != nil {
 		return nil, domain.NetError{
 			Err:        err,
@@ -1022,7 +785,7 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 		}
 	}
 
-	defer resp.Close() // ?
+	defer resp.Close()
 
 	pst := make([]domain.Post, 0)
 	// for i := range resp {
@@ -1038,9 +801,9 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 	// 	})
 	// }
 	for resp.Next() {
-		var post domain.Post
-		err = resp.Scan(&post.Id, &post.Parent, &post.Author, &post.Message, &post.IsEdited, &post.Forum, &post.Thread, &post.Created)
-		pst = append(pst, post)
+		var tmp domain.Post
+		err = resp.Scan(&tmp.Id, &tmp.Parent, &tmp.Author, &tmp.Message, &tmp.IsEdited, &tmp.Forum, &tmp.Thread, &tmp.Created)
+		pst = append(pst, tmp)
 	}
 
 	return pst, domain.NetError{
@@ -1066,7 +829,6 @@ func (r *repHandler) UpVote(vote domain.Vote) (domain.Vote, error) {
 
 func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, domain.NetError) {
 	resp, err := r.dbm.Pool.Query(context.Background(), SelectUserByEmailOrNickname, usersS[0].Nickname, usersS[0].Email)
-	defer resp.Close()
 	if err != nil {
 		return []domain.User{}, domain.NetError{
 			Err:        err,
@@ -1075,7 +837,7 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 		}
 	}
 
-	defer resp.Close() // ?
+	defer resp.Close()
 
 	usr := make([]domain.User, 0)
 	// for i := range resp {
@@ -1087,9 +849,9 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 	// 	})
 	// }
 	for resp.Next() {
-		userOne := domain.User{}
-		resp.Scan(&userOne.Nickname, &userOne.Fullname, &userOne.About, &userOne.Email)
-		usr = append(usr, userOne)
+		var tmp domain.User
+		resp.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
+		usr = append(usr, tmp)
 	}
 
 	return usr, domain.NetError{
@@ -1100,7 +862,7 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 }
 
 func (r *repHandler) CreateUsers(user domain.User) (domain.User, domain.NetError) {
-	_, err := r.dbm.Pool.Exec(context.Background(), `Insert INTO users(Nickname, FullName, About, Email) VALUES ($1, $2, $3, $4);`, user.Nickname, user.Fullname, user.About, user.Email)
+	_, err := r.dbm.Pool.Exec(context.Background(), InsertUser, user.Nickname, user.Fullname, user.About, user.Email)
 	if err != nil {
 		return domain.User{}, domain.NetError{
 			Err:        err,
@@ -1134,11 +896,11 @@ func (r *repHandler) ChangeInfoUser(user domain.User) (domain.User, error) {
 	// 		Email:    cast.ToString(resp[0][3]),
 	// 	},
 	// 	nil
-	upUser := domain.User{}
+	var tmp domain.User
 	row := r.dbm.Pool.QueryRow(context.Background(), UpdateUser, user.Fullname, user.About, user.Email, user.Nickname)
-	err := row.Scan(&upUser.Nickname, &upUser.Fullname, &upUser.About, &upUser.Email)
+	err := row.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
 	if err != nil {
 		return domain.User{}, err
 	}
-	return upUser, nil
+	return tmp, nil
 }

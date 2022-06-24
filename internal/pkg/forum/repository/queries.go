@@ -15,6 +15,7 @@ const (
 	WHERE nickname = $1 or email = $2
 	LIMIT 2;
 	`
+
 	GetUsersOfForumDescNotNilSince = `
 	SELECT nickname, fullname, about, email
 	FROM users_forum
@@ -48,6 +49,11 @@ const (
 	WHERE nickname = $4
 	RETURNING nickname, fullname, about, email;
 	`
+
+	InsertUser = `
+	INSERT INTO users (nickname, fullname, about,email)
+	VALUES ($1, $2, $3, $4);
+	`
 )
 
 // thread
@@ -76,7 +82,7 @@ const (
 	GetThreadsSinceDescNil = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
-	WHERE forum = $1 and created >= $2
+	WHERE forum = $1 AND created >= $2
 	ORDER BY created ASC
 	LIMIT $3;
 	`
@@ -115,7 +121,7 @@ const (
 	SET
 		title = coalesce(nullif($1, ''), title),
 		message = coalesce(nullif($2, ''), message)
-	WHERE %s
+	WHERE %s = $3
 	RETURNING id, title, author, forum, message, votes, slug, created;
 	`
 
@@ -235,7 +241,8 @@ const (
 
 	InsertIntoPosts = `
 	INSERT INTO posts (author, created, forum, message, parent, thread)
-	VALUES
+	VALUES %s
+	RETURNING id, created, forum, isedited, thread;
 	`
 
 	SelectTreeLimitSinceNil = `
@@ -299,5 +306,19 @@ const (
 	WHERE posts.path > parent.path AND posts.thread = $1
 	ORDER BY posts.path ASC, posts.id ASC
 	LIMIT $3;
+	`
+
+	SelectOnPostsParentDesc = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE path[1] = ANY (%s)
+	ORDER BY path[1] DESC, path, id;
+	`
+
+	SelectOnPostsParentAsc = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE path[1] = ANY (%s)
+	ORDER BY path[1] ASC, path, id;
 	`
 )
