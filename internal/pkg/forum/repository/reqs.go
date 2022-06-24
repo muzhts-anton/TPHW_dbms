@@ -26,7 +26,7 @@ func InitRep(dbm *database.DBManager) domain.Repository {
 	}
 }
 
-func (r *repHandler) GetUser(name string) (domain.User, domain.NetError) {
+func (r *repHandler) RepGetUser(name string) (domain.User, domain.NetError) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), queryGetUserByNickname, name)
 	// if err != nil {
 	// 	return domain.User{}, domain.NetError{
@@ -169,12 +169,12 @@ func (r *repHandler) GetThreadBySlug(check string, thread domain.Thread) (domain
 	}
 }
 
-func (r *repHandler) InForum(forum domain.Forum) error {
+func (r *repHandler) RepInForum(forum domain.Forum) error {
 	_, err := r.dbm.Pool.Exec(context.Background(), queryInsertInForum, forum.Slug, forum.User, forum.Title)
 	return err
 }
 
-func (r *repHandler) GetForum(slug string) (domain.Forum, domain.NetError) {
+func (r *repHandler) RepGetForum(slug string) (domain.Forum, domain.NetError) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectForumBySlug, slug)
 	// if err != nil {
 	// 	return domain.Forum{}, domain.NetError{
@@ -209,8 +209,8 @@ func (r *repHandler) GetForum(slug string) (domain.Forum, domain.NetError) {
 	}
 }
 
-func (r *repHandler) InThread(thread domain.Thread) (domain.Thread, domain.NetError) {
-	usr, nerr := r.GetUser(thread.Author)
+func (r *repHandler) RepInThread(thread domain.Thread) (domain.Thread, domain.NetError) {
+	usr, nerr := r.RepGetUser(thread.Author)
 	if nerr.Err != nil {
 		return domain.Thread{}, nerr
 	}
@@ -265,7 +265,7 @@ func (r *repHandler) InThread(thread domain.Thread) (domain.Thread, domain.NetEr
 	}
 }
 
-func (r *repHandler) GetThreadSlug(slug string) (domain.Thread, domain.NetError) {
+func (r *repHandler) RepGetThreadSlug(slug string) (domain.Thread, domain.NetError) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectThreadSlug, slug)
 	// if err != nil {
 	// 	return domain.Thread{}, domain.NetError{
@@ -299,7 +299,7 @@ func (r *repHandler) GetThreadSlug(slug string) (domain.Thread, domain.NetError)
 	}
 }
 
-func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.User, domain.NetError) {
+func (r *repHandler) RepGetUsersOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.User, domain.NetError) {
 	var query string
 	if desc == "true" {
 		if since != "" {
@@ -346,7 +346,7 @@ func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 	}
 }
 
-func (r *repHandler) GetThreadsOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.Thread, domain.NetError) {
+func (r *repHandler) RepGetThreadsOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.Thread, domain.NetError) {
 	trd := make([]domain.Thread, 0)
 
 	var resp pgx.Rows
@@ -383,7 +383,7 @@ func (r *repHandler) GetThreadsOfForum(forum domain.Forum, limit string, since s
 	}
 }
 
-func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
+func (r *repHandler) RepGetIdThread(id int) (domain.Thread, domain.NetError) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectThreadId, id)
 	// if err != nil {
 	// 	return domain.Thread{}, domain.NetError{
@@ -418,7 +418,7 @@ func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
 	}
 }
 
-func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (domain.PostFull, domain.NetError) {
+func (r *repHandler) RepGetFullPostInfo(posts domain.PostFull, related []string) (domain.PostFull, domain.NetError) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectPostById, posts.Post.Id)
 	// if err != nil {
 	// 	return domain.PostFull{}, domain.NetError{
@@ -460,15 +460,15 @@ func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (d
 
 	for _, item := range related {
 		if "thread" == item {
-			tmp, _ := r.GetIdThread(pstf.Post.Thread)
+			tmp, _ := r.RepGetIdThread(pstf.Post.Thread)
 			pstf.Thread = &tmp
 		}
 		if "user" == item {
-			tmp, _ := r.GetUser(pstf.Post.Author)
+			tmp, _ := r.RepGetUser(pstf.Post.Author)
 			pstf.Author = &tmp
 		}
 		if "forum" == item {
-			tmp, _ := r.GetForum(pstf.Post.Forum)
+			tmp, _ := r.RepGetForum(pstf.Post.Forum)
 			pstf.Forum = &tmp
 		}
 	}
@@ -480,7 +480,7 @@ func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (d
 	}
 }
 
-func (r *repHandler) UpdatePostInfo(post domain.Post, postUpdate domain.PostUpdate) (domain.Post, domain.NetError) {
+func (r *repHandler) RepUpdatePostInfo(post domain.Post, postUpdate domain.PostUpdate) (domain.Post, domain.NetError) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), queryUpdatePostMessage, postUpdate.Message, post.Id)
 	// if err != nil {
 	// 	return domain.Post{}, domain.NetError{
@@ -526,7 +526,7 @@ func (r *repHandler) UpdatePostInfo(post domain.Post, postUpdate domain.PostUpda
 	}
 }
 
-func (r *repHandler) GetClear() domain.NetError {
+func (r *repHandler) RepGetClear() domain.NetError {
 	_, err := r.dbm.Pool.Exec(context.Background(), queryClearAll)
 	if err != nil {
 		return domain.NetError{
@@ -543,7 +543,7 @@ func (r *repHandler) GetClear() domain.NetError {
 	}
 }
 
-func (r *repHandler) GetStatus() (sts domain.Status) {
+func (r *repHandler) RepGetStatus() (sts domain.Status) {
 	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectCountUsers)
 	if err := resp.Scan(&sts.User); err != nil {
 		sts.User = 0
@@ -567,7 +567,7 @@ func (r *repHandler) GetStatus() (sts domain.Status) {
 	return
 }
 
-func (r *repHandler) InPosts(posts []domain.Post, thread domain.Thread) ([]domain.Post, error) {
+func (r *repHandler) RepInPosts(posts []domain.Post, thread domain.Thread) ([]domain.Post, error) {
 	now := time.Now()
 	var qr string
 	var values []interface{}
@@ -604,7 +604,7 @@ func (r *repHandler) InPosts(posts []domain.Post, thread domain.Thread) ([]domai
 	return posts, nil
 }
 
-func (r *repHandler) UpdateThreadInfo(upThread domain.Thread) (domain.Thread, domain.NetError) {
+func (r *repHandler) RepUpdateThreadInfo(upThread domain.Thread) (domain.Thread, domain.NetError) {
 	var resp pgx.Row
 	if upThread.Slug == "" {
 		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(queryUpdateThread, `id`), upThread.Title, upThread.Message, upThread.Id)
@@ -637,7 +637,7 @@ func (r *repHandler) UpdateThreadInfo(upThread domain.Thread) (domain.Thread, do
 	}
 }
 
-func (r *repHandler) GetPostsFlat(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
+func (r *repHandler) RepGetPostsFlat(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
 	pst := make([]domain.Post, 0)
 	var resp pgx.Rows
 	var err error
@@ -706,7 +706,7 @@ func (r *repHandler) getTree(id int, since, limit, desc string) (pgx.Rows, error
 	return r.dbm.Pool.Query(context.Background(), qr, params...)
 }
 
-func (r *repHandler) GetPostsTree(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
+func (r *repHandler) RepGetPostsTree(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
 	resp, err := r.getTree(id, since, limit, desc)
 	if err != nil {
 		return nil, domain.NetError{
@@ -751,7 +751,7 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 	}
 }
 
-func (r *repHandler) GetPostsParent(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
+func (r *repHandler) RepGetPostsParent(limit string, since string, desc string, id int) ([]domain.Post, domain.NetError) {
 	par := fmt.Sprintf(`SELECT id FROM posts WHERE thread = %d AND parent = 0 `, id)
 	if since != "" {
 		if desc == "true" {
@@ -813,12 +813,12 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 	}
 }
 
-func (r *repHandler) InVoted(vote domain.Vote) error {
+func (r *repHandler) RepInVoted(vote domain.Vote) error {
 	_, err := r.dbm.Pool.Exec(context.Background(), queryInsertVote, vote.Nickname, vote.Voice, vote.Thread)
 	return err
 }
 
-func (r *repHandler) UpVote(vote domain.Vote) (domain.Vote, error) {
+func (r *repHandler) RepUpVote(vote domain.Vote) (domain.Vote, error) {
 	_, err := r.dbm.Pool.Exec(context.Background(), queryUpdateVote, vote.Voice, vote.Nickname, vote.Thread)
 	if err != nil {
 		return domain.Vote{}, err
@@ -827,7 +827,7 @@ func (r *repHandler) UpVote(vote domain.Vote) (domain.Vote, error) {
 	return vote, nil
 }
 
-func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, domain.NetError) {
+func (r *repHandler) RepCheckUserEmailUniq(usersS []domain.User) ([]domain.User, domain.NetError) {
 	resp, err := r.dbm.Pool.Query(context.Background(), queryGetUserByNicknameEmail, usersS[0].Nickname, usersS[0].Email)
 	if err != nil {
 		return []domain.User{}, domain.NetError{
@@ -861,7 +861,7 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 	}
 }
 
-func (r *repHandler) CreateUsers(user domain.User) (domain.User, domain.NetError) {
+func (r *repHandler) RepCreateUsers(user domain.User) (domain.User, domain.NetError) {
 	_, err := r.dbm.Pool.Exec(context.Background(), queryInsertUser, user.Nickname, user.Fullname, user.About, user.Email)
 	if err != nil {
 		return domain.User{}, domain.NetError{
@@ -878,7 +878,7 @@ func (r *repHandler) CreateUsers(user domain.User) (domain.User, domain.NetError
 	}
 }
 
-func (r *repHandler) ChangeInfoUser(user domain.User) (domain.User, error) {
+func (r *repHandler) RepChangeInfoUser(user domain.User) (domain.User, error) {
 	// resp, err := r.dbm.Query(queryUpdateUser, user.Fullname, user.About, user.Email, user.Nickname)
 	// if err != nil {
 	// 	fmt.Println("huh?")

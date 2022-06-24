@@ -21,27 +21,27 @@ type UseCase interface {
 }
 
 type Repository interface {
-	GetUser(name string) (User, NetError)
-	InForum(forum Forum) error
-	GetForum(slug string) (Forum, NetError)
-	InThread(thread Thread) (Thread, NetError)
-	GetThreadSlug(slug string) (Thread, NetError)
-	GetUsersOfForum(forum Forum, limit string, since string, desc string) ([]User, NetError)
-	GetThreadsOfForum(forum Forum, limit string, since string, desc string) ([]Thread, NetError)
-	GetFullPostInfo(posts PostFull, related []string) (PostFull, NetError)
-	GetIdThread(id int) (Thread, NetError)
-	UpdatePostInfo(post Post, postUpdate PostUpdate) (Post, NetError)
-	GetClear() NetError
-	GetStatus() Status
-	InPosts(posts []Post, thread Thread) ([]Post, error)
-	UpdateThreadInfo(upThread Thread) (Thread, NetError)
-	GetPostsFlat(limit string, since string, desc string, ID int) ([]Post, NetError)
-	GetPostsTree(limit string, since string, desc string, ID int) ([]Post, NetError)
-	GetPostsParent(limit string, since string, desc string, ID int) ([]Post, NetError)
-	InVoted(vote Vote) error
-	UpVote(vote Vote) (Vote, error)
-	CreateUsers(user User) (User, NetError)
-	ChangeInfoUser(user User) (User, error)
-	CheckUserEmailUniq(user []User) ([]User, NetError)
+	RepGetUser(name string) (User, NetError)
+	RepInForum(forum Forum) error
+	RepGetForum(slug string) (Forum, NetError)
+	RepInThread(thread Thread) (Thread, NetError)
+	RepGetThreadSlug(slug string) (Thread, NetError)
+	RepGetUsersOfForum(forum Forum, limit string, since string, desc string) ([]User, NetError)
+	RepGetThreadsOfForum(forum Forum, limit string, since string, desc string) ([]Thread, NetError)
+	RepGetFullPostInfo(posts PostFull, related []string) (PostFull, NetError)
+	RepGetIdThread(id int) (Thread, NetError)
+	RepUpdatePostInfo(post Post, postUpdate PostUpdate) (Post, NetError)
+	RepGetClear() NetError
+	RepGetStatus() Status
+	RepInPosts(posts []Post, thread Thread) ([]Post, error)
+	RepUpdateThreadInfo(upThread Thread) (Thread, NetError)
+	RepGetPostsFlat(limit string, since string, desc string, ID int) ([]Post, NetError)
+	RepGetPostsTree(limit string, since string, desc string, ID int) ([]Post, NetError)
+	RepGetPostsParent(limit string, since string, desc string, ID int) ([]Post, NetError)
+	RepInVoted(vote Vote) error
+	RepUpVote(vote Vote) (Vote, error)
+	RepCreateUsers(user User) (User, NetError)
+	RepChangeInfoUser(user User) (User, error)
+	RepCheckUserEmailUniq(user []User) ([]User, NetError)
 	ForumCheck(forum Forum) (Forum, NetError)
 }
