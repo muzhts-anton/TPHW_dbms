@@ -41,7 +41,7 @@ func (h *DelHandler) CreateForum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var nerr domain.NetError
-	*frm, nerr = h.dhusc.Forum(*frm)
+	*frm, nerr = h.dhusc.UscForum(*frm)
 	if nerr.Err != nil {
 		var out []byte
 		if nerr.Statuscode == http.StatusConflict {
@@ -77,7 +77,7 @@ func (h *DelHandler) ForumInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	frm, nerr := h.dhusc.GetForum(domain.Forum{Slug: param})
+	frm, nerr := h.dhusc.UscGetForum(domain.Forum{Slug: param})
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -134,7 +134,7 @@ func (h *DelHandler) CreateThreadsForum(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var nerr domain.NetError
-	*trd, nerr = h.dhusc.CreateThreadsForum(*trd)
+	*trd, nerr = h.dhusc.UscCreateThreadsForum(*trd)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -182,7 +182,7 @@ func (h *DelHandler) GetUsersForum(w http.ResponseWriter, r *http.Request) {
 		limit = "100"
 	}
 
-	usr, nerr := h.dhusc.GetUsersOfForum(domain.Forum{Slug: param}, limit, since, desc)
+	usr, nerr := h.dhusc.UscGetUsersOfForum(domain.Forum{Slug: param}, limit, since, desc)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -227,7 +227,7 @@ func (h *DelHandler) GetThreadsForum(w http.ResponseWriter, r *http.Request) {
 		desc = tmp[0]
 	}
 
-	trd, nerr := h.dhusc.GetThreadsOfForum(domain.Forum{Slug: param}, limit, since, desc)
+	trd, nerr := h.dhusc.UscGetThreadsOfForum(domain.Forum{Slug: param}, limit, since, desc)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -266,7 +266,7 @@ func (h *DelHandler) GetPostInfo(w http.ResponseWriter, r *http.Request) {
 	var pf domain.PostFull
 	pf.Post.Id = int(id)
 
-	pf, nerr := h.dhusc.GetFullPostInfo(pf, related)
+	pf, nerr := h.dhusc.UscGetFullPostInfo(pf, related)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -323,7 +323,7 @@ func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
 
 	pu.Id = int(id)
 
-	pst, nerr := h.dhusc.UpdatePostInfo(*pu)
+	pst, nerr := h.dhusc.UscUpdatePostInfo(*pu)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -343,7 +343,7 @@ func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
 func (h *DelHandler) GetClear(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	nerr := h.dhusc.GetClear()
+	nerr := h.dhusc.UscGetClear()
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -361,7 +361,7 @@ func (h *DelHandler) GetClear(w http.ResponseWriter, _ *http.Request) {
 func (h *DelHandler) GetStatus(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	sts := h.dhusc.GetStatus()
+	sts := h.dhusc.UscGetStatus()
 
 	out, _ := easyjson.Marshal(sts)
 	w.WriteHeader(http.StatusOK)
@@ -383,7 +383,7 @@ func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	trd, nerr := h.dhusc.UscCheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -425,7 +425,7 @@ func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pst, nerr = h.dhusc.CreatePosts(pst, trd)
+	pst, nerr = h.dhusc.UscCreatePosts(pst, trd)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -456,7 +456,7 @@ func (h *DelHandler) GetThreadInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	trd, nerr := h.dhusc.UscCheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -512,7 +512,7 @@ func (h *DelHandler) UpdateThreadInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var nerr domain.NetError
-	*trd, nerr = h.dhusc.UpdateThreadInfo(slid, *trd)
+	*trd, nerr = h.dhusc.UscUpdateThreadInfo(slid, *trd)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -560,7 +560,7 @@ func (h *DelHandler) GetPostOfThread(w http.ResponseWriter, r *http.Request) {
 		sort = tmp[0]
 	}
 
-	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	trd, nerr := h.dhusc.UscCheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -571,7 +571,7 @@ func (h *DelHandler) GetPostOfThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pst, nerr := h.dhusc.GetPostOfThread(limit, since, desc, sort, trd.Id)
+	pst, nerr := h.dhusc.UscGetPostOfThread(limit, since, desc, sort, trd.Id)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -602,7 +602,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
+	trd, nerr := h.dhusc.UscCheckThreadIdOrSlug(slid)
 	if nerr.Statuscode != http.StatusOK {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -641,7 +641,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		vt.Thread = trd.Id
 	}
 
-	_, nerr = h.dhusc.Voted(*vt, trd)
+	_, nerr = h.dhusc.UscVoted(*vt, trd)
 	if nerr.Statuscode != http.StatusOK {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -652,7 +652,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trd, nerr = h.dhusc.CheckThreadIdOrSlug(slid)
+	trd, nerr = h.dhusc.UscCheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -708,7 +708,7 @@ func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usrs, nerr := h.dhusc.CreateUsers(*usr)
+	usrs, nerr := h.dhusc.UscCreateUsers(*usr)
 	if nerr.Err != nil {
 		var out []byte
 		if nerr.Statuscode == http.StatusConflict {
@@ -752,7 +752,7 @@ func (h *DelHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr, nerr := h.dhusc.GetUser(usr)
+	usr, nerr := h.dhusc.UscGetUser(usr)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
@@ -809,7 +809,7 @@ func (h *DelHandler) ChangeInfoUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var nerr domain.NetError
-	*usr, nerr = h.dhusc.ChangeInfoUser(*usr)
+	*usr, nerr = h.dhusc.UscChangeInfoUser(*usr)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,

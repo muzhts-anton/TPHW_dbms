@@ -20,7 +20,7 @@ func InitUsc(uhrep domain.Repository) domain.UseCase {
 	}
 }
 
-func (u *UscHandler) Forum(forum domain.Forum) (domain.Forum, domain.NetError) {
+func (u *UscHandler) UscForum(forum domain.Forum) (domain.Forum, domain.NetError) {
 	usr, nerr := u.uhrep.GetUser(forum.User)
 	if nerr.Err != nil {
 		return domain.Forum{}, nerr
@@ -62,15 +62,15 @@ func (u *UscHandler) Forum(forum domain.Forum) (domain.Forum, domain.NetError) {
 	}
 }
 
-func (u *UscHandler) GetForum(forum domain.Forum) (domain.Forum, domain.NetError) {
+func (u *UscHandler) UscGetForum(forum domain.Forum) (domain.Forum, domain.NetError) {
 	return u.uhrep.GetForum(forum.Slug)
 }
 
-func (u *UscHandler) CreateThreadsForum(thread domain.Thread) (domain.Thread, domain.NetError) {
+func (u *UscHandler) UscCreateThreadsForum(thread domain.Thread) (domain.Thread, domain.NetError) {
 	return u.uhrep.InThread(thread)
 }
 
-func (u *UscHandler) GetUsersOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.User, domain.NetError) {
+func (u *UscHandler) UscGetUsersOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.User, domain.NetError) {
 	_, nerr := u.uhrep.GetForum(forum.Slug)
 	if nerr.Err != nil {
 		return nil, nerr
@@ -79,7 +79,7 @@ func (u *UscHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 	return u.uhrep.GetUsersOfForum(forum, limit, since, desc)
 }
 
-func (u *UscHandler) GetThreadsOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.Thread, domain.NetError) {
+func (u *UscHandler) UscGetThreadsOfForum(forum domain.Forum, limit string, since string, desc string) ([]domain.Thread, domain.NetError) {
 	_, nerr := u.uhrep.GetForum(forum.Slug)
 	if nerr.Err != nil {
 		return nil, nerr
@@ -88,11 +88,11 @@ func (u *UscHandler) GetThreadsOfForum(forum domain.Forum, limit string, since s
 	return u.uhrep.GetThreadsOfForum(forum, limit, since, desc)
 }
 
-func (u *UscHandler) GetFullPostInfo(posts domain.PostFull, related []string) (domain.PostFull, domain.NetError) {
+func (u *UscHandler) UscGetFullPostInfo(posts domain.PostFull, related []string) (domain.PostFull, domain.NetError) {
 	return u.uhrep.GetFullPostInfo(posts, related)
 }
 
-func (u *UscHandler) UpdatePostInfo(postUpdate domain.PostUpdate) (domain.Post, domain.NetError) {
+func (u *UscHandler) UscUpdatePostInfo(postUpdate domain.PostUpdate) (domain.Post, domain.NetError) {
 	pst, nerr := u.uhrep.UpdatePostInfo(domain.Post{Id: postUpdate.Id}, postUpdate)
 	if nerr.Err != nil {
 		return domain.Post{}, domain.NetError{
@@ -109,15 +109,15 @@ func (u *UscHandler) UpdatePostInfo(postUpdate domain.PostUpdate) (domain.Post, 
 	}
 }
 
-func (u *UscHandler) GetClear() domain.NetError {
+func (u *UscHandler) UscGetClear() domain.NetError {
 	return u.uhrep.GetClear()
 }
 
-func (u *UscHandler) GetStatus() domain.Status {
+func (u *UscHandler) UscGetStatus() domain.Status {
 	return u.uhrep.GetStatus()
 }
 
-func (u *UscHandler) CheckThreadIdOrSlug(slugOrId string) (domain.Thread, domain.NetError) {
+func (u *UscHandler) UscCheckThreadIdOrSlug(slugOrId string) (domain.Thread, domain.NetError) {
 	id, err := strconv.ParseInt(slugOrId, 10, 0)
 	if err != nil {
 		return u.uhrep.GetThreadSlug(slugOrId)
@@ -125,7 +125,7 @@ func (u *UscHandler) CheckThreadIdOrSlug(slugOrId string) (domain.Thread, domain
 	return u.uhrep.GetIdThread(int(id))
 }
 
-func (u *UscHandler) CreatePosts(posts []domain.Post, thread domain.Thread) ([]domain.Post, domain.NetError) {
+func (u *UscHandler) UscCreatePosts(posts []domain.Post, thread domain.Thread) ([]domain.Post, domain.NetError) {
 	pst, err := u.uhrep.InPosts(posts, thread)
 	if err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlNotFound {
@@ -149,7 +149,7 @@ func (u *UscHandler) CreatePosts(posts []domain.Post, thread domain.Thread) ([]d
 	}
 }
 
-func (u *UscHandler) UpdateThreadInfo(slugOrId string, thread domain.Thread) (domain.Thread, domain.NetError) {
+func (u *UscHandler) UscUpdateThreadInfo(slugOrId string, thread domain.Thread) (domain.Thread, domain.NetError) {
 	id, err := strconv.Atoi(slugOrId)
 	if err != nil {
 		thread.Slug = slugOrId
@@ -160,7 +160,7 @@ func (u *UscHandler) UpdateThreadInfo(slugOrId string, thread domain.Thread) (do
 	return u.uhrep.UpdateThreadInfo(thread)
 }
 
-func (u *UscHandler) GetPostOfThread(limit string, since string, desc string, sort string, id int) ([]domain.Post, domain.NetError) {
+func (u *UscHandler) UscGetPostOfThread(limit string, since string, desc string, sort string, id int) ([]domain.Post, domain.NetError) {
 	switch sort {
 	case "flat":
 		return u.uhrep.GetPostsFlat(limit, since, desc, id)
@@ -173,7 +173,7 @@ func (u *UscHandler) GetPostOfThread(limit string, since string, desc string, so
 	}
 }
 
-func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Thread, domain.NetError) {
+func (u *UscHandler) UscVoted(vote domain.Vote, thread domain.Thread) (domain.Thread, domain.NetError) {
 	err := u.uhrep.InVoted(vote)
 	if err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlConflict {
@@ -215,7 +215,7 @@ func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Threa
 	}
 }
 
-func (u *UscHandler) CreateUsers(user domain.User) ([]domain.User, domain.NetError) {
+func (u *UscHandler) UscCreateUsers(user domain.User) ([]domain.User, domain.NetError) {
 	usr := make([]domain.User, 0)
 	usr = append(usr, user)
 
@@ -239,11 +239,11 @@ func (u *UscHandler) CreateUsers(user domain.User) ([]domain.User, domain.NetErr
 	}
 }
 
-func (u *UscHandler) GetUser(user domain.User) (domain.User, domain.NetError) {
+func (u *UscHandler) UscGetUser(user domain.User) (domain.User, domain.NetError) {
 	return u.uhrep.GetUser(user.Nickname)
 }
 
-func (u *UscHandler) ChangeInfoUser(user domain.User) (domain.User, domain.NetError) {
+func (u *UscHandler) UscChangeInfoUser(user domain.User) (domain.User, domain.NetError) {
 	usr, err := u.uhrep.ChangeInfoUser(user)
 	if err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlConflict {
