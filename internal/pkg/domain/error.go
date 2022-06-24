@@ -5,10 +5,10 @@ type ErrorResp struct {
 }
 
 const (
-	ErrorBadRequest          = "Bad request"
-	ErrorNotFound            = "Item is not found"
-	ErrorConflict            = "Already exist"
-	ErrorInternalServerError = "Internal Server Error"
+	ErrorBadRequest     = "Bad request"
+	ErrorNotFound       = "Item is not found"
+	ErrorConflict       = "Already exist"
+	ErrorInternalServer = "Internal Server Error"
 )
 
 const (

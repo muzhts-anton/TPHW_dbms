@@ -32,7 +32,7 @@ func (r *repHandler) GetUser(name string) (domain.User, domain.NetError) {
 	// 	return domain.User{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -67,7 +67,7 @@ func (r *repHandler) ForumCheck(forum domain.Forum) (domain.Forum, domain.NetErr
 	// 	return domain.Forum{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -103,7 +103,7 @@ func (r *repHandler) CheckSlug(thread domain.Thread) (domain.Thread, domain.NetE
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -141,7 +141,7 @@ func (r *repHandler) GetThreadBySlug(check string, thread domain.Thread) (domain
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -180,7 +180,7 @@ func (r *repHandler) GetForum(slug string) (domain.Forum, domain.NetError) {
 	// 	return domain.Forum{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -271,7 +271,7 @@ func (r *repHandler) GetThreadSlug(slug string) (domain.Thread, domain.NetError)
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 	// if len(resp) == 0 {
@@ -318,7 +318,7 @@ func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 		return nil, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
@@ -389,7 +389,7 @@ func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -424,7 +424,7 @@ func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (d
 	// 	return domain.PostFull{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -486,7 +486,7 @@ func (r *repHandler) UpdatePostInfo(post domain.Post, postUpdate domain.PostUpda
 	// 	return domain.Post{}, domain.NetError{
 	// 		Err:        err,
 	// 		Statuscode: http.StatusInternalServerError,
-	// 		Message:    domain.ErrorInternalServerError,
+	// 		Message:    domain.ErrorInternalServer,
 	// 	}
 	// }
 
@@ -532,7 +532,7 @@ func (r *repHandler) GetClear() domain.NetError {
 		return domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
@@ -655,7 +655,7 @@ func (r *repHandler) GetPostsFlat(limit string, since string, desc string, id in
 		return nil, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
@@ -712,7 +712,7 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 		return nil, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 	defer resp.Close()
@@ -725,7 +725,7 @@ func (r *repHandler) GetPostsTree(limit string, since string, desc string, id in
 			return pst, domain.NetError{
 				Err:        err,
 				Statuscode: http.StatusInternalServerError,
-				Message:    domain.ErrorInternalServerError,
+				Message:    domain.ErrorInternalServer,
 			}
 		}
 
@@ -781,7 +781,7 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 		return nil, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
@@ -833,7 +833,7 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 		return []domain.User{}, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
@@ -867,7 +867,7 @@ func (r *repHandler) CreateUsers(user domain.User) (domain.User, domain.NetError
 		return domain.User{}, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 

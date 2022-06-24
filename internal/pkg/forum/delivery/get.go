@@ -20,7 +20,7 @@ func (h *DelHandler) CreateForum(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -32,7 +32,7 @@ func (h *DelHandler) CreateForum(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, frm)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +101,7 @@ func (h *DelHandler) CreateThreadsForum(w http.ResponseWriter, r *http.Request) 
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -113,7 +113,7 @@ func (h *DelHandler) CreateThreadsForum(w http.ResponseWriter, r *http.Request) 
 	err = easyjson.Unmarshal(b, trd)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -301,7 +301,7 @@ func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -313,7 +313,7 @@ func (h *DelHandler) UpdatePostInfo(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, pu)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -398,7 +398,7 @@ func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -410,7 +410,7 @@ func (h *DelHandler) CreatePosts(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, &pst)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -491,7 +491,7 @@ func (h *DelHandler) UpdateThreadInfo(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -503,7 +503,7 @@ func (h *DelHandler) UpdateThreadInfo(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, trd)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -617,7 +617,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -629,7 +629,7 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, vt)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -676,7 +676,7 @@ func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -688,7 +688,7 @@ func (h *DelHandler) CreateUsers(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, usr)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -776,7 +776,7 @@ func (h *DelHandler) ChangeInfoUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)
@@ -788,7 +788,7 @@ func (h *DelHandler) ChangeInfoUser(w http.ResponseWriter, r *http.Request) {
 	err = easyjson.Unmarshal(b, usr)
 	if err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
-			Message: domain.ErrorInternalServerError,
+			Message: domain.ErrorInternalServer,
 		})
 
 		w.WriteHeader(http.StatusInternalServerError)

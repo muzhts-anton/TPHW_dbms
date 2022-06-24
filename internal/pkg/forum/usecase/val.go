@@ -48,7 +48,7 @@ func (u *UscHandler) Forum(forum domain.Forum) (domain.Forum, domain.NetError) {
 		return domain.Forum{}, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
@@ -182,7 +182,7 @@ func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Threa
 				return domain.Thread{}, domain.NetError{
 					Err:        err,
 					Statuscode: http.StatusInternalServerError,
-					Message:    domain.ErrorInternalServerError,
+					Message:    domain.ErrorInternalServer,
 				}
 			}
 
@@ -204,7 +204,7 @@ func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Threa
 		return domain.Thread{}, domain.NetError{
 			Err:        err,
 			Statuscode: http.StatusInternalServerError,
-			Message:    domain.ErrorInternalServerError,
+			Message:    domain.ErrorInternalServer,
 		}
 	}
 
