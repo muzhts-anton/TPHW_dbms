@@ -2,21 +2,21 @@ package rep
 
 // users
 const (
-	SelectUserByNickname = `
+	queryGetUserByNickname = `
 	SELECT nickname, fullname, about, email
 	FROM users
 	WHERE nickname = $1
 	LIMIT 1;
 	`
 
-	SelectUserByEmailOrNickname = `
+	queryGetUserByNicknameEmail = `
 	SELECT nickname, fullname, about, email
 	FROM users
 	WHERE nickname = $1 or email = $2
 	LIMIT 2;
 	`
 
-	GetUsersOfForumDescNotNilSince = `
+	queryGetUsersOfForumDescNotNilSince = `
 	SELECT nickname, fullname, about, email
 	FROM users_forum
 	WHERE slug = $1 and nickname < '%s'
@@ -24,7 +24,7 @@ const (
 	LIMIT nullif($2, 0);
 	`
 
-	GetUsersOfForumDescSinceNil = `
+	queryGetUsersOfForumDescSinceNil = `
 	SELECT nickname, fullname, about, email
 	FROM users_forum
 	WHERE slug = $1
@@ -32,7 +32,7 @@ const (
 	LIMIT nullif($2, 0);
 	`
 
-	GetUsersOfForumDescNil = `
+	queryGetUsersOfForumDescNil = `
 	SELECT nickname, fullname, about, email
 	FROM users_forum
 	WHERE slug = $1 and nickname > '%s'
@@ -40,7 +40,7 @@ const (
 	LIMIT nullif($2, 0);
 	`
 
-	UpdateUser = `
+	queryUpdateUser = `
 	UPDATE users
 	SET
 		fullname = coalesce(nullif($1, ''), fullname),
@@ -50,7 +50,7 @@ const (
 	RETURNING nickname, fullname, about, email;
 	`
 
-	InsertUser = `
+	queryInsertUser = `
 	INSERT INTO users (nickname, fullname, about,email)
 	VALUES ($1, $2, $3, $4);
 	`
@@ -58,20 +58,20 @@ const (
 
 // thread
 const (
-	SelectThread = `
+	queryGetThread = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE slug = $1
 	LIMIT 1;
 	`
 
-	SelectThreadSlug = `
+	querySelectThreadSlug = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE slug = $1
 	LIMIT 1;
 	`
-	GetThreadsSinceDescNotNil = `
+	queryGetThreadsSinceDescNotNil = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE forum = $1 and created <= $2
@@ -79,7 +79,7 @@ const (
 	LIMIT $3;
 	`
 
-	GetThreadsSinceDescNil = `
+	queryGetThreadsSinceDescNil = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE forum = $1 AND created >= $2
@@ -87,7 +87,7 @@ const (
 	LIMIT $3;
 	`
 
-	GetThreadsDescNotNil = `
+	queryGetThreadsDescNotNil = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE forum = $1
@@ -95,7 +95,7 @@ const (
 	LIMIT $2;
 	`
 
-	GetThreadsDescNil = `
+	queryGetThreadsDescNil = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE forum = $1
@@ -103,20 +103,20 @@ const (
 	LIMIT $2;
 	`
 
-	SelectThreadId = `
+	querySelectThreadId = `
 	SELECT id, title, author, forum, message, votes, slug, created
 	FROM threads
 	WHERE id = $1
 	LIMIT 1;
 	`
 
-	InsertThread = `
+	queryInsertThread = `
 	INSERT INTO threads (author, message, title, created, forum, slug, votes)
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING id;
 	`
 
-	UpdateThread = `
+	queryUpdateThread = `
 	UPDATE threads
 	SET
 		title = coalesce(nullif($1, ''), title),
@@ -125,7 +125,7 @@ const (
 	RETURNING id, title, author, forum, message, votes, slug, created;
 	`
 
-	SelectThreadShort = `
+	querySelectThreadShort = `
 	SELECT slug, author
 	FROM threads
 	WHERE slug = $1;
@@ -134,13 +134,13 @@ const (
 
 // votes
 const (
-	UpdateVote = `
+	queryUpdateVote = `
 	UPDATE votes
 	SET voice = $1
 	WHERE author = $2 AND thread = $3;
 	`
 
-	InsertVote = `
+	queryInsertVote = `
 	INSERT INTO votes (author, voice, thread)
 	VALUES ($1, $2, $3);
 	`
@@ -148,19 +148,19 @@ const (
 
 // forum
 const (
-	SelectForumBySlug = `
+	querySelectForumBySlug = `
 	SELECT title, "user", slug, posts, threads
 	FROM forum
 	WHERE slug = $1
 	LIMIT 1;
 	`
 
-	InsertInForum = `
+	queryInsertInForum = `
 	INSERT INTO forum (slug, "user", title)
 	VALUES ($1, $2, $3);
 	`
 
-	SelectSlugFromForum = `
+	querySelectSlugFromForum = `
 	SELECT slug
 	FROM forum
 	WHERE slug = $1;
@@ -169,36 +169,36 @@ const (
 
 // other
 const (
-	ClearAll = `
+	queryClearAll = `
 	TRUNCATE table users, forum, threads, posts, votes, users_forum CASCADE;
 	`
 
-	SelectCountUsers = `
+	querySelectCountUsers = `
 	SELECT COUNT(*) FROM users;
 	`
 
-	SelectCountForum = `
+	querySelectCountForum = `
 	SELECT COUNT(*) FROM forum;
 	`
 
-	SelectCountThreads = `
+	querySelectCountThreads = `
 	SELECT COUNT(*) FROM threads;
 	`
 
-	SelectCountPosts = `
+	querySelectCountPosts = `
 	SELECT COUNT(*) FROM posts;
 	`
 )
 
 // posts
 const (
-	SelectPostById = `
+	querySelectPostById = `
 	SELECT parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE id = $1;
 	`
 
-	UpdatePostMessage = `
+	queryUpdatePostMessage = `
 	UPDATE posts
 	SET
 		message = coalesce(nullif($1, ''), message),
@@ -207,7 +207,7 @@ const (
 	RETURNING id, parent, author, message, isedited, forum, thread, created, path;
 	`
 
-	SelectPostSinceDescNotNil = `
+	querySelectPostSinceDescNotNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1
@@ -215,7 +215,7 @@ const (
 	LIMIT $2;
 	`
 
-	SelectPostSinceDescNil = `
+	querySelectPostSinceDescNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1
@@ -223,7 +223,7 @@ const (
 	LIMIT $2;
 	`
 
-	SelectPostDescNotNil = `
+	querySelectPostDescNotNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1 and id < $2
@@ -231,7 +231,7 @@ const (
 	LIMIT $3;
 	`
 
-	SelectPostDescNil = `
+	querySelectPostDescNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1 and id > $2
@@ -239,26 +239,26 @@ const (
 	LIMIT $3;
 	`
 
-	InsertIntoPosts = `
+	queryInsertIntoPosts = `
 	INSERT INTO posts (author, created, forum, message, parent, thread)
 	VALUES %s
 	RETURNING id, created, forum, isedited, thread;
 	`
 
-	SelectTreeLimitSinceNil = `
+	querySelectTreeLimitSinceNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1
 	ORDER BY path, id DESC;
 	`
 
-	SelectTreeLimitSinceDescNil = `
+	querySelectTreeLimitSinceDescNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created FROM posts
 	WHERE thread = $1
 	ORDER BY path, id ASC;
 	`
 
-	SelectTreeSinceNil = `
+	querySelectTreeSinceNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1
@@ -266,7 +266,7 @@ const (
 	LIMIT $2;
 	`
 
-	SelectTreeSinceDescNil = `
+	querySelectTreeSinceDescNil = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE thread = $1
@@ -274,7 +274,7 @@ const (
 	LIMIT $2;
 	`
 
-	SelectTreeNotNil = `
+	querySelectTreeNotNil = `
 	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
 	FROM posts
 	JOIN posts parent ON parent.id = $2
@@ -283,7 +283,7 @@ const (
 	LIMIT $3;
 	`
 
-	SelectTreeSinceNilDesc = `
+	querySelectTreeSinceNilDesc = `
 	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
 	FROM posts
 	JOIN posts parent ON parent.id = $2
@@ -291,7 +291,7 @@ const (
 	ORDER BY posts.path DESC, posts.id DESC;
 	`
 
-	SelectTreeSinceNilDescNil = `
+	querySelectTreeSinceNilDescNil = `
 	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
 	FROM posts
 	JOIN posts parent ON parent.id = $2
@@ -299,7 +299,7 @@ const (
 	ORDER BY posts.path ASC, posts.id ASC;
 	`
 
-	SelectTree = `
+	querySelectTree = `
 	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
 	FROM posts
 	JOIN posts parent ON parent.id = $2
@@ -308,14 +308,14 @@ const (
 	LIMIT $3;
 	`
 
-	SelectOnPostsParentDesc = `
+	querySelectOnPostsParentDesc = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE path[1] = ANY (%s)
 	ORDER BY path[1] DESC, path, id;
 	`
 
-	SelectOnPostsParentAsc = `
+	querySelectOnPostsParentAsc = `
 	SELECT id, parent, author, message, isedited, forum, thread, created
 	FROM posts
 	WHERE path[1] = ANY (%s)

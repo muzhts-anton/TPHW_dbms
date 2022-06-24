@@ -2,7 +2,6 @@ package del
 
 import (
 	"dbms/internal/pkg/domain"
-	"fmt"
 
 	"io/ioutil"
 	"net/http"
@@ -456,7 +455,7 @@ func (h *DelHandler) GetThreadInfo(w http.ResponseWriter, r *http.Request) {
 		w.Write(out)
 		return
 	}
-	fmt.Println("del 1")
+
 	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
 		out, _ := easyjson.Marshal(domain.ErrorResp{
@@ -605,7 +604,6 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 
 	trd, nerr := h.dhusc.CheckThreadIdOrSlug(slid)
 	if nerr.Statuscode != http.StatusOK {
-		fmt.Println("(1)", slid, nerr.Statuscode)
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
 		})
@@ -645,7 +643,6 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 
 	_, nerr = h.dhusc.Voted(*vt, trd)
 	if nerr.Statuscode != http.StatusOK {
-		fmt.Println("(2)", slid, nerr.Statuscode)
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
 		})
@@ -657,7 +654,6 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 
 	trd, nerr = h.dhusc.CheckThreadIdOrSlug(slid)
 	if nerr.Err != nil {
-		fmt.Println("(3)", slid, nerr.Statuscode)
 		out, _ := easyjson.Marshal(domain.ErrorResp{
 			Message: nerr.Message,
 		})
@@ -667,7 +663,6 @@ func (h DelHandler) Voted(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("(4)", slid, http.StatusOK)
 	out, _ := easyjson.Marshal(trd)
 	w.WriteHeader(http.StatusOK)
 	w.Write(out)

@@ -11,6 +11,11 @@ const (
 	ErrorInternalServerError = "Internal Server Error"
 )
 
+const (
+	ErrorPsqlNotFound = "23503"
+	ErrorPsqlConflict = "23505"
+)
+
 //easyjson:skip
 type NetError struct {
 	Err        error

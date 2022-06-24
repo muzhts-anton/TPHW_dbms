@@ -27,7 +27,7 @@ func InitRep(dbm *database.DBManager) domain.Repository {
 }
 
 func (r *repHandler) GetUser(name string) (domain.User, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectUserByNickname, name)
+	resp := r.dbm.Pool.QueryRow(context.Background(), queryGetUserByNickname, name)
 	// if err != nil {
 	// 	return domain.User{}, domain.NetError{
 	// 		Err:        err,
@@ -62,7 +62,7 @@ func (r *repHandler) GetUser(name string) (domain.User, domain.NetError) {
 }
 
 func (r *repHandler) ForumCheck(forum domain.Forum) (domain.Forum, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectSlugFromForum, forum.Slug)
+	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectSlugFromForum, forum.Slug)
 	// if err != nil {
 	// 	return domain.Forum{}, domain.NetError{
 	// 		Err:        err,
@@ -98,7 +98,7 @@ func (r *repHandler) ForumCheck(forum domain.Forum) (domain.Forum, domain.NetErr
 }
 
 func (r *repHandler) CheckSlug(thread domain.Thread) (domain.Thread, domain.NetError) {
-	// resp, err := r.dbm.Query(SelectThreadShort, thread.Slug)
+	// resp, err := r.dbm.Query(querySelectThreadShort, thread.Slug)
 	// if err != nil {
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
@@ -118,7 +118,7 @@ func (r *repHandler) CheckSlug(thread domain.Thread) (domain.Thread, domain.NetE
 	// thread.Slug = cast.ToString(resp[0][0])
 	// thread.Author = cast.ToString(resp[0][1])
 
-	row := r.dbm.Pool.QueryRow(context.Background(), SelectThreadShort, thread.Slug)
+	row := r.dbm.Pool.QueryRow(context.Background(), querySelectThreadShort, thread.Slug)
 	err := row.Scan(&thread.Slug, &thread.Author)
 	if err != nil {
 		return domain.Thread{}, domain.NetError{
@@ -136,7 +136,7 @@ func (r *repHandler) CheckSlug(thread domain.Thread) (domain.Thread, domain.NetE
 }
 
 func (r *repHandler) GetThreadBySlug(check string, thread domain.Thread) (domain.Thread, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectThread, check)
+	resp := r.dbm.Pool.QueryRow(context.Background(), queryGetThread, check)
 	// if err != nil {
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
@@ -170,12 +170,12 @@ func (r *repHandler) GetThreadBySlug(check string, thread domain.Thread) (domain
 }
 
 func (r *repHandler) InForum(forum domain.Forum) error {
-	_, err := r.dbm.Pool.Exec(context.Background(), InsertInForum, forum.Slug, forum.User, forum.Title)
+	_, err := r.dbm.Pool.Exec(context.Background(), queryInsertInForum, forum.Slug, forum.User, forum.Title)
 	return err
 }
 
 func (r *repHandler) GetForum(slug string) (domain.Forum, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectForumBySlug, slug)
+	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectForumBySlug, slug)
 	// if err != nil {
 	// 	return domain.Forum{}, domain.NetError{
 	// 		Err:        err,
@@ -237,7 +237,7 @@ func (r *repHandler) InThread(thread domain.Thread) (domain.Thread, domain.NetEr
 		}
 	}
 
-	row := r.dbm.Pool.QueryRow(context.Background(), InsertThread, thread.Author, thread.Message, thread.Title, thread.Created, thread.Forum, thread.Slug, 0)
+	row := r.dbm.Pool.QueryRow(context.Background(), queryInsertThread, thread.Author, thread.Message, thread.Title, thread.Created, thread.Forum, thread.Slug, 0)
 	err := row.Scan(&trd.Id)
 	if err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok {
@@ -266,7 +266,7 @@ func (r *repHandler) InThread(thread domain.Thread) (domain.Thread, domain.NetEr
 }
 
 func (r *repHandler) GetThreadSlug(slug string) (domain.Thread, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectThreadSlug, slug)
+	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectThreadSlug, slug)
 	// if err != nil {
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
@@ -303,12 +303,12 @@ func (r *repHandler) GetUsersOfForum(forum domain.Forum, limit string, since str
 	var query string
 	if desc == "true" {
 		if since != "" {
-			query = fmt.Sprintf(GetUsersOfForumDescNotNilSince, since)
+			query = fmt.Sprintf(queryGetUsersOfForumDescNotNilSince, since)
 		} else {
-			query = GetUsersOfForumDescSinceNil
+			query = queryGetUsersOfForumDescSinceNil
 		}
 	} else {
-		query = fmt.Sprintf(GetUsersOfForumDescNil, since)
+		query = fmt.Sprintf(queryGetUsersOfForumDescNil, since)
 	}
 
 	usr := make([]domain.User, 0)
@@ -352,13 +352,13 @@ func (r *repHandler) GetThreadsOfForum(forum domain.Forum, limit string, since s
 	var resp pgx.Rows
 	var err error
 	if since != "" && desc == "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsSinceDescNotNil, forum.Slug, since, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), queryGetThreadsSinceDescNotNil, forum.Slug, since, limit)
 	} else if since != "" && desc != "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsSinceDescNil, forum.Slug, since, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), queryGetThreadsSinceDescNil, forum.Slug, since, limit)
 	} else if since == "" && desc == "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsDescNotNil, forum.Slug, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), queryGetThreadsDescNotNil, forum.Slug, limit)
 	} else if since == "" && desc != "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), GetThreadsDescNil, forum.Slug, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), queryGetThreadsDescNil, forum.Slug, limit)
 	}
 
 	if err != nil {
@@ -384,7 +384,7 @@ func (r *repHandler) GetThreadsOfForum(forum domain.Forum, limit string, since s
 }
 
 func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectThreadId, id)
+	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectThreadId, id)
 	// if err != nil {
 	// 	return domain.Thread{}, domain.NetError{
 	// 		Err:        err,
@@ -419,7 +419,7 @@ func (r *repHandler) GetIdThread(id int) (domain.Thread, domain.NetError) {
 }
 
 func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (domain.PostFull, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectPostById, posts.Post.Id)
+	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectPostById, posts.Post.Id)
 	// if err != nil {
 	// 	return domain.PostFull{}, domain.NetError{
 	// 		Err:        err,
@@ -481,7 +481,7 @@ func (r *repHandler) GetFullPostInfo(posts domain.PostFull, related []string) (d
 }
 
 func (r *repHandler) UpdatePostInfo(post domain.Post, postUpdate domain.PostUpdate) (domain.Post, domain.NetError) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), UpdatePostMessage, postUpdate.Message, post.Id)
+	resp := r.dbm.Pool.QueryRow(context.Background(), queryUpdatePostMessage, postUpdate.Message, post.Id)
 	// if err != nil {
 	// 	return domain.Post{}, domain.NetError{
 	// 		Err:        err,
@@ -527,7 +527,7 @@ func (r *repHandler) UpdatePostInfo(post domain.Post, postUpdate domain.PostUpda
 }
 
 func (r *repHandler) GetClear() domain.NetError {
-	_, err := r.dbm.Pool.Exec(context.Background(), ClearAll)
+	_, err := r.dbm.Pool.Exec(context.Background(), queryClearAll)
 	if err != nil {
 		return domain.NetError{
 			Err:        err,
@@ -544,22 +544,22 @@ func (r *repHandler) GetClear() domain.NetError {
 }
 
 func (r *repHandler) GetStatus() (sts domain.Status) {
-	resp := r.dbm.Pool.QueryRow(context.Background(), SelectCountUsers)
+	resp := r.dbm.Pool.QueryRow(context.Background(), querySelectCountUsers)
 	if err := resp.Scan(&sts.User); err != nil {
 		sts.User = 0
 	}
 
-	resp = r.dbm.Pool.QueryRow(context.Background(), SelectCountForum)
+	resp = r.dbm.Pool.QueryRow(context.Background(), querySelectCountForum)
 	if err := resp.Scan(&sts.Forum); err != nil {
 		sts.Forum = 0
 	}
 
-	resp = r.dbm.Pool.QueryRow(context.Background(), SelectCountThreads)
+	resp = r.dbm.Pool.QueryRow(context.Background(), querySelectCountThreads)
 	if err := resp.Scan(&sts.Thread); err != nil {
 		sts.Thread = 0
 	}
 
-	resp = r.dbm.Pool.QueryRow(context.Background(), SelectCountPosts)
+	resp = r.dbm.Pool.QueryRow(context.Background(), querySelectCountPosts)
 	if err := resp.Scan(&sts.Post); err != nil {
 		sts.Post = 0
 	}
@@ -583,7 +583,7 @@ func (r *repHandler) InPosts(posts []domain.Post, thread domain.Thread) ([]domai
 		)
 	}
 
-	resp, err := r.dbm.Pool.Query(context.Background(), fmt.Sprintf(InsertIntoPosts, qr[:len(qr)-1]), values...)
+	resp, err := r.dbm.Pool.Query(context.Background(), fmt.Sprintf(queryInsertIntoPosts, qr[:len(qr)-1]), values...)
 	if err != nil {
 		return nil, err
 	}
@@ -607,9 +607,9 @@ func (r *repHandler) InPosts(posts []domain.Post, thread domain.Thread) ([]domai
 func (r *repHandler) UpdateThreadInfo(upThread domain.Thread) (domain.Thread, domain.NetError) {
 	var resp pgx.Row
 	if upThread.Slug == "" {
-		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(UpdateThread, `id`), upThread.Title, upThread.Message, upThread.Id)
+		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(queryUpdateThread, `id`), upThread.Title, upThread.Message, upThread.Id)
 	} else {
-		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(UpdateThread, `slug`), upThread.Title, upThread.Message, upThread.Slug)
+		resp = r.dbm.Pool.QueryRow(context.Background(), fmt.Sprintf(queryUpdateThread, `slug`), upThread.Title, upThread.Message, upThread.Slug)
 	}
 
 	var tmp domain.Thread
@@ -642,13 +642,13 @@ func (r *repHandler) GetPostsFlat(limit string, since string, desc string, id in
 	var resp pgx.Rows
 	var err error
 	if since == "" && desc == "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostSinceDescNotNil, id, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), querySelectPostSinceDescNotNil, id, limit)
 	} else if since == "" && desc != "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostSinceDescNil, id, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), querySelectPostSinceDescNil, id, limit)
 	} else if since != "" && desc == "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostDescNotNil, id, since, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), querySelectPostDescNotNil, id, since, limit)
 	} else if since != "" && desc != "true" {
-		resp, err = r.dbm.Pool.Query(context.Background(), SelectPostDescNil, id, since, limit)
+		resp, err = r.dbm.Pool.Query(context.Background(), querySelectPostDescNil, id, since, limit)
 	}
 
 	if err != nil {
@@ -678,28 +678,28 @@ func (r *repHandler) getTree(id int, since, limit, desc string) (pgx.Rows, error
 	var params []interface{}
 
 	if limit == "" && since == "" && desc == "true" {
-		qr = SelectTreeLimitSinceNil
+		qr = querySelectTreeLimitSinceNil
 		params = []interface{}{id}
 	} else if limit == "" && since == "" && desc != "true" {
-		qr = SelectTreeLimitSinceDescNil
+		qr = querySelectTreeLimitSinceDescNil
 		params = []interface{}{id}
 	} else if limit == "" && since != "" && desc == "true" {
-		qr = SelectTreeSinceNilDesc
+		qr = querySelectTreeSinceNilDesc
 		params = []interface{}{id, since}
 	} else if limit == "" && since != "" && desc != "true" {
-		qr = SelectTreeSinceNilDescNil
+		qr = querySelectTreeSinceNilDescNil
 		params = []interface{}{id, since}
 	} else if limit != "" && since == "" && desc == "true" {
-		qr = SelectTreeSinceNil
+		qr = querySelectTreeSinceNil
 		params = []interface{}{id, limit}
 	} else if limit != "" && since == "" && desc != "true" {
-		qr = SelectTreeSinceDescNil
+		qr = querySelectTreeSinceDescNil
 		params = []interface{}{id, limit}
 	} else if limit != "" && since != "" && desc == "true" {
-		qr = SelectTreeNotNil
+		qr = querySelectTreeNotNil
 		params = []interface{}{id, since, limit}
 	} else if limit != "" && since != "" && desc != "true" {
-		qr = SelectTree
+		qr = querySelectTree
 		params = []interface{}{id, since, limit}
 	}
 
@@ -771,9 +771,9 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 
 	var qr string
 	if desc == "true" {
-		qr = fmt.Sprintf(SelectOnPostsParentDesc, par)
+		qr = fmt.Sprintf(querySelectOnPostsParentDesc, par)
 	} else {
-		qr = fmt.Sprintf(SelectOnPostsParentAsc, par)
+		qr = fmt.Sprintf(querySelectOnPostsParentAsc, par)
 	}
 
 	resp, err := r.dbm.Pool.Query(context.Background(), qr)
@@ -814,12 +814,12 @@ func (r *repHandler) GetPostsParent(limit string, since string, desc string, id 
 }
 
 func (r *repHandler) InVoted(vote domain.Vote) error {
-	_, err := r.dbm.Pool.Exec(context.Background(), InsertVote, vote.Nickname, vote.Voice, vote.Thread)
+	_, err := r.dbm.Pool.Exec(context.Background(), queryInsertVote, vote.Nickname, vote.Voice, vote.Thread)
 	return err
 }
 
 func (r *repHandler) UpVote(vote domain.Vote) (domain.Vote, error) {
-	_, err := r.dbm.Pool.Exec(context.Background(), UpdateVote, vote.Voice, vote.Nickname, vote.Thread)
+	_, err := r.dbm.Pool.Exec(context.Background(), queryUpdateVote, vote.Voice, vote.Nickname, vote.Thread)
 	if err != nil {
 		return domain.Vote{}, err
 	}
@@ -828,7 +828,7 @@ func (r *repHandler) UpVote(vote domain.Vote) (domain.Vote, error) {
 }
 
 func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, domain.NetError) {
-	resp, err := r.dbm.Pool.Query(context.Background(), SelectUserByEmailOrNickname, usersS[0].Nickname, usersS[0].Email)
+	resp, err := r.dbm.Pool.Query(context.Background(), queryGetUserByNicknameEmail, usersS[0].Nickname, usersS[0].Email)
 	if err != nil {
 		return []domain.User{}, domain.NetError{
 			Err:        err,
@@ -862,7 +862,7 @@ func (r *repHandler) CheckUserEmailUniq(usersS []domain.User) ([]domain.User, do
 }
 
 func (r *repHandler) CreateUsers(user domain.User) (domain.User, domain.NetError) {
-	_, err := r.dbm.Pool.Exec(context.Background(), InsertUser, user.Nickname, user.Fullname, user.About, user.Email)
+	_, err := r.dbm.Pool.Exec(context.Background(), queryInsertUser, user.Nickname, user.Fullname, user.About, user.Email)
 	if err != nil {
 		return domain.User{}, domain.NetError{
 			Err:        err,
@@ -879,7 +879,7 @@ func (r *repHandler) CreateUsers(user domain.User) (domain.User, domain.NetError
 }
 
 func (r *repHandler) ChangeInfoUser(user domain.User) (domain.User, error) {
-	// resp, err := r.dbm.Query(UpdateUser, user.Fullname, user.About, user.Email, user.Nickname)
+	// resp, err := r.dbm.Query(queryUpdateUser, user.Fullname, user.About, user.Email, user.Nickname)
 	// if err != nil {
 	// 	fmt.Println("huh?")
 	// 	return domain.User{}, err
@@ -897,7 +897,7 @@ func (r *repHandler) ChangeInfoUser(user domain.User) (domain.User, error) {
 	// 	},
 	// 	nil
 	var tmp domain.User
-	row := r.dbm.Pool.QueryRow(context.Background(), UpdateUser, user.Fullname, user.About, user.Email, user.Nickname)
+	row := r.dbm.Pool.QueryRow(context.Background(), queryUpdateUser, user.Fullname, user.About, user.Email, user.Nickname)
 	err := row.Scan(&tmp.Nickname, &tmp.Fullname, &tmp.About, &tmp.Email)
 	if err != nil {
 		return domain.User{}, err

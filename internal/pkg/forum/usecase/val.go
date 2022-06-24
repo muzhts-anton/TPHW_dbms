@@ -4,7 +4,6 @@ import (
 	"dbms/internal/pkg/domain"
 
 	"errors"
-	_ "fmt"
 	"net/http"
 	"strconv"
 
@@ -31,14 +30,14 @@ func (u *UscHandler) Forum(forum domain.Forum) (domain.Forum, domain.NetError) {
 
 	err := u.uhrep.InForum(forum)
 	if err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23503" {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlNotFound {
 			return domain.Forum{}, domain.NetError{
 				Err:        err,
 				Statuscode: http.StatusNotFound,
 				Message:    domain.ErrorNotFound,
 			}
 		}
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlConflict {
 			tmp, _ := u.uhrep.GetForum(forum.Slug)
 			return tmp, domain.NetError{
 				Err:        err,
@@ -129,7 +128,7 @@ func (u *UscHandler) CheckThreadIdOrSlug(slugOrId string) (domain.Thread, domain
 func (u *UscHandler) CreatePosts(posts []domain.Post, thread domain.Thread) ([]domain.Post, domain.NetError) {
 	pst, err := u.uhrep.InPosts(posts, thread)
 	if err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23503" {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlNotFound {
 			return nil, domain.NetError{
 				Err:        err,
 				Statuscode: http.StatusNotFound,
@@ -177,7 +176,7 @@ func (u *UscHandler) GetPostOfThread(limit string, since string, desc string, so
 func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Thread, domain.NetError) {
 	err := u.uhrep.InVoted(vote)
 	if err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlConflict {
 			_, err := u.uhrep.UpVote(vote)
 			if err != nil {
 				return domain.Thread{}, domain.NetError{
@@ -194,7 +193,7 @@ func (u *UscHandler) Voted(vote domain.Vote, thread domain.Thread) (domain.Threa
 			}
 		}
 
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23503" {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlNotFound {
 			return domain.Thread{}, domain.NetError{
 				Err:        err,
 				Statuscode: http.StatusNotFound,
@@ -247,7 +246,7 @@ func (u *UscHandler) GetUser(user domain.User) (domain.User, domain.NetError) {
 func (u *UscHandler) ChangeInfoUser(user domain.User) (domain.User, domain.NetError) {
 	usr, err := u.uhrep.ChangeInfoUser(user)
 	if err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == "23505" {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == domain.ErrorPsqlConflict {
 			return domain.User{}, domain.NetError{
 				Err:        err,
 				Statuscode: http.StatusConflict,
