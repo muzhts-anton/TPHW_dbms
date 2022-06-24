@@ -1,5 +1,7 @@
-CREATE EXTENSION IF NOT EXISTS CITEXT; -- eliminate calls to lower
+-- CITEXT to convert to lowercase
+CREATE EXTENSION IF NOT EXISTS CITEXT;
 
+-- UNLOGGED for speed
 CREATE UNLOGGED TABLE users
 (
     Nickname   CITEXT PRIMARY KEY,
@@ -101,9 +103,9 @@ EXECUTE PROCEDURE insertVotes();
 CREATE OR REPLACE FUNCTION updatePostUserForum() RETURNS TRIGGER AS
 $update_forum_posts$
 DECLARE
-    t_fullname CITEXT;
-    t_about    CITEXT;
-    t_email CITEXT;
+    t_fullname  CITEXT;
+    t_about     CITEXT;
+    t_email     CITEXT;
 BEGIN
     SELECT fullname, about, email FROM users WHERE nickname = NEW.author INTO t_fullname, t_about, t_email;
     INSERT INTO users_forum (nickname, fullname, about, email, Slug)

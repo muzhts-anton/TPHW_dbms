@@ -1,45 +1,303 @@
 package rep
 
+// users
 const (
-	SelectUserByNickname           = "select nickname, fullname, about, email from users where nickname=$1 limit 1;"
-	SelectUserByEmailOrNickname    = "select nickname, fullname, about, email from users where nickname=$1 or email=$2 limit 2;"
-	SelectForumBySlug              = "select title, \"user\", slug, posts, threads from forum where slug=$1 limit 1;"
-	InsertInForum                  = "insert into forum(slug, \"user\", title) values ($1, $2, $3);"
-	SelectThread                   = "select id, title, author, forum, message, votes, slug, created from threads where slug = $1 limit 1;" // TODO: 0_o
-	SelectThreadSlug               = "select id, title, author, forum, message, votes, slug, created from threads where slug = $1 limit 1;"
-	GetUsersOfForumDescNotNilSince = "select nickname, fullname, about, email from users_forum where slug=$1 and nickname < '%s' order by nickname desc limit nullif($2, 0)"
-	GetUsersOfForumDescSinceNil    = "select nickname, fullname, about, email from users_forum where slug=$1 order by nickname desc limit nullif($2, 0)"
-	GetUsersOfForumDescNil         = "select nickname, fullname, about, email from users_forum where slug=$1 and nickname > '%s' order by nickname limit nullif($2, 0)"
-	GetThreadsSinceDescNotNil      = "select id, title, author, forum, message, votes, slug, created from threads where forum=$1 and created <= $2 order by created desc limit $3;"
-	GetThreadsSinceDescNil         = "select id, title, author, forum, message, votes, slug, created from threads where forum=$1 and created >= $2 order by created asc limit $3;"
-	GetThreadsDescNotNil           = "select id, title, author, forum, message, votes, slug, created from threads where forum=$1 order by created desc limit $2;"
-	GetThreadsDescNil              = "select id, title, author, forum, message, votes, slug, created from threads where forum=$1 order by created asc limit $2;"
-	SelectPostById                 = "select parent, author, message, isedited, forum, thread, created from posts where id = $1;"
-	SelectThreadId                 = "select id, title, author, forum, message, votes, slug, created from threads where id = $1 LIMIT 1;"
-	UpdatePostMessage              = "update posts set message=coalesce(nullif($1, ''), message), isedited = case when $1 = '' or message = $1 then isedited else true end where id=$2 returning id, parent, author, message, isedited, forum, thread, created, path"
-	ClearAll                       = "truncate table users, forum, threads, posts, votes, users_forum CASCADE;"
-	SelectCountUsers               = "select count(*) from users;"
-	SelectCountForum               = "select count(*) from forum;"
-	SelectCountThreads             = "select count(*) from threads;"
-	SelectCountPosts               = "select count(*) from posts;"
-	InsertThread                   = "insert into threads (author, message, title, created, forum, slug, votes) values ($1, $2, $3, $4, $5, $6, $7) returning id"
-	UpdateThread                   = "update threads set title=coalesce(nullif($1, ''), title), message=coalesce(nullif($2, ''), message) where %s returning id, title, author, forum, message, votes, slug, created"
-	SelectPostSinceDescNotNil      = "select id, parent, author, message, isedited, forum, thread, created from posts where thread=$1 order by id desc limit $2;"
-	SelectPostSinceDescNil         = "select id, parent, author, message, isedited, forum, thread, created from posts where thread=$1 order by id limit $2;"
-	SelectPostDescNotNil           = "select id, parent, author, message, isedited, forum, thread, created from posts where thread=$1 and id < $2 order by id desc limit $3;"
-	SelectPostDescNil              = "select id, parent, author, message, isedited, forum, thread, created from posts where thread=$1 and id > $2 order by id limit $3;"
-	SelectThreadShort              = "select slug, author from threads where slug = $1;"
-	SelectSlugFromForum            = "select slug from forum where slug = $1;"
-	InsertIntoPosts                = "insert into posts(author, created, forum, message, parent, thread) values"
-	SelectTreeLimitSinceNil        = "select id, parent, author, message, isedited, forum, thread, created from posts where thread = $1 order by path, id desc"
-	SelectTreeLimitSinceDescNil    = "select id, parent, author, message, isedited, forum, thread, created from posts where thread = $1 order by path, id asc"
-	SelectTreeSinceNil             = "select id, parent, author, message, isedited, forum, thread, created from posts where thread = $1 order by path desc, id desc limit $2"
-	SelectTreeSinceDescNil         = "select id, parent, author, message, isedited, forum, thread, created from posts where thread = $1 order by path, id asc limit $2"
-	SelectTreeNotNil               = "select posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created from posts join posts parent on parent.id = $2 where posts.path < parent.path and posts.thread = $1 order by posts.path desc, posts.id desc limit $3"
-	SelectTree                     = "select posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created from posts join posts parent on parent.id = $2 where posts.path > parent.path and posts.thread = $1 order by posts.path asc, posts.id asc limit $3"
-	SelectTreeSinceNilDesc         = "select posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created from posts join posts parent on parent.id = $2 where posts.path < parent.path and posts.thread = $1 order by posts.path desc, posts.id desc"
-	SelectTreeSinceNilDescNil      = "select posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created from posts join posts parent on parent.id = $2 where posts.path > parent.path and posts.thread = $1 order by posts.path asc, posts.id asc"
-	UpdateVote                     = "update votes set voice=$1 where author=$2 and thread=$3;"
-	InsertVote                     = "insert into votes(author, voice, thread) values ($1, $2, $3);"
-	UpdateUser                     = "update users set fullname=coalesce(nullif($1, ''), fullname), about=coalesce(nullif($2, ''), about), email=coalesce(nullif($3, ''), email) where nickname=$4 returning *"
+	SelectUserByNickname = `
+	SELECT nickname, fullname, about, email
+	FROM users
+	WHERE nickname = $1
+	LIMIT 1;
+	`
+
+	SelectUserByEmailOrNickname = `
+	SELECT nickname, fullname, about, email
+	FROM users
+	WHERE nickname = $1 or email = $2
+	LIMIT 2;
+	`
+	GetUsersOfForumDescNotNilSince = `
+	SELECT nickname, fullname, about, email
+	FROM users_forum
+	WHERE slug = $1 and nickname < '%s'
+	ORDER BY nickname DESC
+	LIMIT nullif($2, 0);
+	`
+
+	GetUsersOfForumDescSinceNil = `
+	SELECT nickname, fullname, about, email
+	FROM users_forum
+	WHERE slug = $1
+	ORDER BY nickname DESC
+	LIMIT nullif($2, 0);
+	`
+
+	GetUsersOfForumDescNil = `
+	SELECT nickname, fullname, about, email
+	FROM users_forum
+	WHERE slug = $1 and nickname > '%s'
+	ORDER BY nickname
+	LIMIT nullif($2, 0);
+	`
+
+	UpdateUser = `
+	UPDATE users
+	SET
+		fullname = coalesce(nullif($1, ''), fullname),
+		about = coalesce(nullif($2, ''), about),
+		email = coalesce(nullif($3, ''), email)
+	WHERE nickname = $4
+	RETURNING nickname, fullname, about, email;
+	`
+)
+
+// thread
+const (
+	SelectThread = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE slug = $1
+	LIMIT 1;
+	`
+
+	SelectThreadSlug = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE slug = $1
+	LIMIT 1;
+	`
+	GetThreadsSinceDescNotNil = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE forum = $1 and created <= $2
+	ORDER BY created DESC
+	LIMIT $3;
+	`
+
+	GetThreadsSinceDescNil = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE forum = $1 and created >= $2
+	ORDER BY created ASC
+	LIMIT $3;
+	`
+
+	GetThreadsDescNotNil = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE forum = $1
+	ORDER BY created DESC
+	LIMIT $2;
+	`
+
+	GetThreadsDescNil = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE forum = $1
+	ORDER BY created ASC
+	LIMIT $2;
+	`
+
+	SelectThreadId = `
+	SELECT id, title, author, forum, message, votes, slug, created
+	FROM threads
+	WHERE id = $1
+	LIMIT 1;
+	`
+
+	InsertThread = `
+	INSERT INTO threads (author, message, title, created, forum, slug, votes)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	RETURNING id;
+	`
+
+	UpdateThread = `
+	UPDATE threads
+	SET
+		title = coalesce(nullif($1, ''), title),
+		message = coalesce(nullif($2, ''), message)
+	WHERE %s
+	RETURNING id, title, author, forum, message, votes, slug, created;
+	`
+
+	SelectThreadShort = `
+	SELECT slug, author
+	FROM threads
+	WHERE slug = $1;
+	`
+)
+
+// votes
+const (
+	UpdateVote = `
+	UPDATE votes
+	SET voice = $1
+	WHERE author = $2 AND thread = $3;
+	`
+
+	InsertVote = `
+	INSERT INTO votes (author, voice, thread)
+	VALUES ($1, $2, $3);
+	`
+)
+
+// forum
+const (
+	SelectForumBySlug = `
+	SELECT title, "user", slug, posts, threads
+	FROM forum
+	WHERE slug = $1
+	LIMIT 1;
+	`
+
+	InsertInForum = `
+	INSERT INTO forum (slug, "user", title)
+	VALUES ($1, $2, $3);
+	`
+
+	SelectSlugFromForum = `
+	SELECT slug
+	FROM forum
+	WHERE slug = $1;
+	`
+)
+
+// other
+const (
+	ClearAll = `
+	TRUNCATE table users, forum, threads, posts, votes, users_forum CASCADE;
+	`
+
+	SelectCountUsers = `
+	SELECT COUNT(*) FROM users;
+	`
+
+	SelectCountForum = `
+	SELECT COUNT(*) FROM forum;
+	`
+
+	SelectCountThreads = `
+	SELECT COUNT(*) FROM threads;
+	`
+
+	SelectCountPosts = `
+	SELECT COUNT(*) FROM posts;
+	`
+)
+
+// posts
+const (
+	SelectPostById = `
+	SELECT parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE id = $1;
+	`
+
+	UpdatePostMessage = `
+	UPDATE posts
+	SET
+		message = coalesce(nullif($1, ''), message),
+		isedited = case WHEN $1 = '' OR message = $1 THEN isedited ELSE true END
+	WHERE id = $2
+	RETURNING id, parent, author, message, isedited, forum, thread, created, path;
+	`
+
+	SelectPostSinceDescNotNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1
+	ORDER BY id DESC
+	LIMIT $2;
+	`
+
+	SelectPostSinceDescNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1
+	ORDER BY id
+	LIMIT $2;
+	`
+
+	SelectPostDescNotNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1 and id < $2
+	ORDER BY id DESC
+	LIMIT $3;
+	`
+
+	SelectPostDescNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1 and id > $2
+	ORDER BY id
+	LIMIT $3;
+	`
+
+	InsertIntoPosts = `
+	INSERT INTO posts (author, created, forum, message, parent, thread)
+	VALUES
+	`
+
+	SelectTreeLimitSinceNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1
+	ORDER BY path, id DESC;
+	`
+
+	SelectTreeLimitSinceDescNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created FROM posts
+	WHERE thread = $1
+	ORDER BY path, id ASC;
+	`
+
+	SelectTreeSinceNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1
+	ORDER BY path DESC, id DESC
+	LIMIT $2;
+	`
+
+	SelectTreeSinceDescNil = `
+	SELECT id, parent, author, message, isedited, forum, thread, created
+	FROM posts
+	WHERE thread = $1
+	ORDER BY path, id ASC
+	LIMIT $2;
+	`
+
+	SelectTreeNotNil = `
+	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
+	FROM posts
+	JOIN posts parent ON parent.id = $2
+	WHERE posts.path < parent.path AND posts.thread = $1
+	ORDER BY posts.path DESC, posts.id DESC
+	LIMIT $3;
+	`
+
+	SelectTreeSinceNilDesc = `
+	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
+	FROM posts
+	JOIN posts parent ON parent.id = $2
+	WHERE posts.path < parent.path AND posts.thread = $1
+	ORDER BY posts.path DESC, posts.id DESC;
+	`
+
+	SelectTreeSinceNilDescNil = `
+	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
+	FROM posts
+	JOIN posts parent ON parent.id = $2
+	WHERE posts.path > parent.path AND posts.thread = $1
+	ORDER BY posts.path ASC, posts.id ASC;
+	`
+
+	SelectTree = `
+	SELECT posts.id, posts.parent, posts.author, posts.message, posts.isedited, posts.forum, posts.thread, posts.created
+	FROM posts
+	JOIN posts parent ON parent.id = $2
+	WHERE posts.path > parent.path AND posts.thread = $1
+	ORDER BY posts.path ASC, posts.id ASC
+	LIMIT $3;
+	`
 )
